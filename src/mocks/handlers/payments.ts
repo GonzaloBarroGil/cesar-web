@@ -1,0 +1,92 @@
+import { http, HttpResponse } from "msw";
+import { payments, TORRE_NORTE_ID } from "../fixtures/data";
+import type { PaymentData } from "../fixtures/data";
+
+function error(status: number, code: string, message: string) {
+  return HttpResponse.json({ error: { code, message } }, { status });
+}
+
+export const paymentsHandlers = [
+  // Create payment
+  http.post("http://localhost:3000/api/v1/payments", async ({ request }) => {
+    const body = (await request.json()) as Partial<PaymentData>;
+    const newP: PaymentData = {
+      id: crypto.randomUUID(),
+      consorcio_id: body.consorcio_id || TORRE_NORTE_ID,
+      unidad_funcional_id: body.unidad_funcional_id || "",
+      period_code: body.period_code || "202606",
+      amount: body.amount || { amount: "0.00", currency: "ARS" },
+      medio_pago: body.medio_pago || "TRANSFER",
+      voucher_number: body.voucher_number || null,
+      no_voucher_warning: body.medio_pago === "CASH" && !body.voucher_number,
+      recibo_id: null,
+      status: "ACTIVE",
+      hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
+      version: 1,
+      created_at: new Date().toISOString(),
+    };
+    payments.push(newP);
+    return HttpResponse.json(newP, { status: 201 });
+  }),
+
+  // List payments
+  http.get("http://localhost:3000/api/v1/payments", ({ request }) => {
+    const url = new URL(request.url);
+    const consorcio = url.searchParams.get("consorcio_id");
+    const period = url.searchParams.get("period_code");
+    let result = [...payments];
+    if (consorcio) result = result.filter((p) => p.consorcio_id === consorcio);
+    if (period) result = result.filter((p) => p.period_code === period);
+    return HttpResponse.json(result, { status: 200 });
+  }),
+
+  // Get payment detail
+  http.get("http://localhost:3000/api/v1/payments/:id", ({ params }) => {
+    const p = payments.find((p) => p.id === params.id);
+    if (!p) return error(404, "NOT_FOUND", "Payment not found");
+    return HttpResponse.json(p, { status: 200 });
+  }),
+
+  // Reverse payment
+  http.post("http://localhost:3000/api/v1/payments/:id/reverse", ({ params }) => {
+    const idx = payments.findIndex((p) => p.id === params.id);
+    if (idx === -1) return error(404, "NOT_FOUND", "Payment not found");
+    const reversal: PaymentData = {
+      id: crypto.randomUUID(),
+      consorcio_id: payments[idx]!.consorcio_id,
+      unidad_funcional_id: payments[idx]!.unidad_funcional_id,
+      period_code: payments[idx]!.period_code,
+      amount: payments[idx]!.amount,
+      medio_pago: payments[idx]!.medio_pago,
+      voucher_number: null,
+      no_voucher_warning: false,
+      recibo_id: null,
+      status: "REVERSED",
+      hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
+      version: 1,
+      created_at: new Date().toISOString(),
+    };
+    payments[idx]!.status = "REVERSED";
+    payments.push(reversal);
+    return HttpResponse.json(reversal, { status: 201 });
+  }),
+
+  // Unit balance
+  http.get("http://localhost:3000/api/v1/payments/unit/:unitId/balance", ({ params }) => {
+    const unitPayments = payments.filter((p) => p.unidad_funcional_id === params.unitId && p.status === "ACTIVE");
+    const total = unitPayments.reduce((s, p) => s + parseFloat(p.amount.amount || "0"), 0);
+    return HttpResponse.json({
+      unit_id: params.unitId,
+      total_paid: { amount: total.toFixed(2), currency: "ARS" },
+      payment_count: unitPayments.length,
+    }, { status: 200 });
+  }),
+
+  // Payment history
+  http.get("http://localhost:3000/api/v1/payments/unit/:unitId/history", ({ params }) => {
+    const history = payments
+      .filter((p) => p.unidad_funcional_id === params.unitId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return HttpResponse.json(history, { status: 200 });
+  }),
+];
