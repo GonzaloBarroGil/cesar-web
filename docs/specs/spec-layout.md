@@ -3,7 +3,7 @@
 > **Feature:** Application shell, navigation, and context switching
 > **Phase:** SPEC
 > **Depends on:** Auth (role-based rendering, logout)
-> **Status:** Draft — awaiting HITL validation
+> **Status:** Approved (2026-06-25)
 > **Next:** BDD scenarios → API coverage → PLAN
 
 ---
