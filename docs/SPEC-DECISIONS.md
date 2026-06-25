@@ -38,7 +38,7 @@ use TanStack Query's `onMutate` / `onError` pattern:
 |---|---|---|
 | Expenses | `useApproveExpense`, `useRejectExpense` | SPEC authored |
 | Invoices | `useAnularInvoice`, `useAnularNotaCredito`, `useAnularNotaDebito`, `useAnularRecibo` | SPEC authored |
-| Debt | `useIssueLiquidacion`, `useSignCertificado` | Not yet SPEC'd |
+| Debt | `useIssueLiquidacion`, `useSignCertificado` | SPEC authored |
 | Payments | `useReversePayment` | Not yet SPEC'd |
 | Incomes/Outputs | `useCancelEntry` | Not yet SPEC'd |
 
@@ -92,8 +92,9 @@ confirmation dialog (`shadcn/ui AlertDialog`):
 | Feature | Actions Requiring Confirmation | Status |
 |---|---|---|
 | Expenses | Tombstone, reject EXTRAORDINARIA | SPEC authored |
+| Consorcios | Cerrar período, Archivar período | SPEC authored |
 | Invoices | Anular Factura, NC, ND, Recibo | SPEC authored |
-| Debt | Cerrar período, Archivar período | SPEC authored |
+| Debt | Issue liquidacion, Sign certificado | SPEC authored |
 | Payments | Reverse payment | Not yet SPEC'd |
 | Incomes/Outputs | Cancel entry | Not yet SPEC'd |
 
