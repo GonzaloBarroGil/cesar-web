@@ -40,7 +40,7 @@ use TanStack Query's `onMutate` / `onError` pattern:
 | Invoices | `useAnularInvoice`, `useAnularNotaCredito`, `useAnularNotaDebito`, `useAnularRecibo` | SPEC authored |
 | Debt | `useIssueLiquidacion`, `useSignCertificado` | SPEC authored |
 | Payments | `useReversePayment` | SPEC authored |
-| Incomes/Outputs | `useCancelEntry` | Not yet SPEC'd |
+| Incomes/Outputs | `useCancelEntry` | SPEC authored |
 
 ### Enforcement
 
@@ -96,7 +96,7 @@ confirmation dialog (`shadcn/ui AlertDialog`):
 | Invoices | Anular Factura, NC, ND, Recibo | SPEC authored |
 | Debt | Issue liquidacion, Sign certificado | SPEC authored |
 | Payments | Reverse payment | SPEC authored |
-| Incomes/Outputs | Cancel entry | Not yet SPEC'd |
+| Incomes/Outputs | Cancel entry | SPEC authored |
 
 ### Enforcement
 
