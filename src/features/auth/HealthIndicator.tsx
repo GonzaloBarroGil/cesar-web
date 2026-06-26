@@ -1,0 +1,47 @@
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/api/client";
+
+interface HealthResponse {
+  status: "ok" | "degraded";
+  postgres?: string;
+  redis?: string;
+  nats?: string;
+}
+
+function HealthIndicator() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["health"],
+    queryFn: () =>
+      apiClient<HealthResponse>({ url: "/health", method: "GET" }),
+    refetchInterval: 30_000,
+    retry: false,
+  });
+
+  const status = isError ? "offline" : isLoading ? "loading" : data?.status === "ok" ? "online" : "degraded";
+
+  const colors = {
+    online: "bg-green-500",
+    degraded: "bg-yellow-500",
+    offline: "bg-red-500",
+    loading: "bg-neutral-300 animate-pulse",
+  };
+
+  const labels = {
+    online: "Servicios operativos",
+    degraded: "Algunos servicios están degradados",
+    offline: "Servicio no disponible",
+    loading: "Verificando servicios...",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs text-neutral-500`}
+      title={labels[status]}
+    >
+      <span className={`h-2 w-2 rounded-full ${colors[status]}`} />
+      <span className="hidden sm:inline">{labels[status]}</span>
+    </span>
+  );
+}
+
+export { HealthIndicator };

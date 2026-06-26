@@ -39,33 +39,28 @@ baseClient.interceptors.response.use(
   },
 );
 
-export const apiClient = async <T>(config: {
+type RequestConfig = {
   url: string;
   method: string;
   data?: unknown;
   params?: unknown;
   headers?: Record<string, string>;
   signal?: AbortSignal;
-}): Promise<T> => {
+};
+
+export const apiClient = async <T>(config: RequestConfig): Promise<T> => {
   const response = await baseClient.request<T>({
     url: config.url,
     method: config.method,
     data: config.data,
     params: config.params,
-    headers: config.headers,
+    headers: { ...config.headers },
     signal: config.signal,
   });
   return response.data;
 };
 
-export const loginClient = async <T>(config: {
-  url: string;
-  method: string;
-  data?: unknown;
-  params?: unknown;
-  headers?: Record<string, string>;
-  signal?: AbortSignal;
-}): Promise<T> => {
+export const loginClient = async <T>(config: RequestConfig): Promise<T> => {
   const response = await axios.create({ baseURL: getBaseUrl() }).request<T>({
     url: config.url,
     method: config.method,
