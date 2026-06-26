@@ -19,7 +19,7 @@ Foundation absorbs auth + layout + shared components. No parallel execution.
 | T0.1 | Scaffold Vite + React + shadcn/ui + Tailwind + Biome + TanStack Query provider | feature-developer | — |
 | T0.2 | Shared components: MoneyDisplay, StatusBadge, CUITInput, PeriodPicker, IvaConditionSelect, ConfirmationDialog, ToastProvider, SkeletonCard | feature-developer | T0.1 |
 | T0.2b | Vitest unit tests for all 5 shared components: MoneyDisplay, StatusBadge, CUITInput (checksum), PeriodPicker, IvaConditionSelect | quality-engineer | T0.2 |
-| T0.4 | API plumbing: axios client (JWT + idempotency interceptor), Zod schemas | feature-developer | T0.1 |
+| T0.4 | API plumbing: axios client (JWT + idempotency interceptor), Zod schemas | feature-developer | T0.1 | ✓ Pre-completed (CONTRACT SETUP phase) |
 | T0.5 | Auth: LoginPage, LoginForm, AuthProvider, AuthGuard, RoleGuard, HealthIndicator | feature-developer | T0.2, T0.4 |
 | T0.6 | Layout: AppShell, Sidebar, SidebarLink, Header, ConsorcioSelector, UserMenu, Breadcrumbs, responsive sidebar (hamburger/mobile), HealthIndicator footer | feature-developer | T0.5 |
 | T0.7 | Auth BDD step defs (12 scenarios) + Vitest component tests | quality-engineer | T0.5 |
@@ -301,7 +301,7 @@ acknowledgment before the agent proceeds to the next task.
 ◉ T0.1  feature-developer   Scaffold project                              → HITL ✓
 ◉ T0.2  feature-developer   Shared components                              → HITL ✓
 ◉ T0.2b quality-engineer    Vitest tests for shared components              → HITL ✓
-◉ T0.4  feature-developer   API plumbing                                   → HITL ✓
+◉ T0.4  feature-developer   API plumbing (✓ pre-completed — CONTRACT SETUP)
 ◉ T0.5  feature-developer   Auth: Login + guards                           → HITL ✓
 ◉ T0.6  feature-developer   Layout: AppShell + sidebar                     → HITL ✓
 ◉ T0.7  quality-engineer    Auth BDD step defs + component tests           → HITL ✓
