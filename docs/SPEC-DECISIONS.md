@@ -115,4 +115,53 @@ confirmation dialog (`shadcn/ui AlertDialog`):
 
 ---
 
+## DEC-003: Sonner for Toast Notifications
+
+**Origin:** T0.2 — Shared Components (Foundation wave)
+**Applies to:** All features — any agent showing success/error/warning notifications
+
+### Decision
+
+Use **Sonner** (`sonner` npm package) instead of shadcn/ui's Radix-based toast
+component for all toast notifications.
+
+### Rationale
+
+- Simpler imperative API: `toast.success("Mensaje")`, `toast.error("Error")`,
+  `toast.warning("Advertencia")`. No context provider or state management needed.
+- Widely adopted in shadcn/ui projects as the de facto toast solution.
+- Less boilerplate than Radix Toast primitives (no trigger, viewport, action,
+  or manual open/close state).
+- Integrates well with React Server Components if adopted later (Sonner v2).
+
+### Usage Pattern
+
+```typescript
+import { toast } from "sonner";
+
+// Success
+toast.success("El gasto fue registrado correctamente.");
+
+// Error
+toast.error("No se pudo aprobar el gasto.", {
+  action: { label: "Reintentar", onClick: () => retry() },
+});
+
+// Warning
+toast.warning("Comprobante no registrado.");
+```
+
+### Enforcement
+
+- `feature-developer` agent must use `toast` from `sonner` for all notifications.
+- `quality-engineer` agent must write BDD scenarios that assert toast content.
+- No other toast library or notification pattern is allowed.
+
+### Features Affected
+
+All 9 features. Every mutation success/failure, DEC-001 rollback notification,
+and network error notification uses Sonner.
+
+---
+
 *End of SPEC Design Decisions.*

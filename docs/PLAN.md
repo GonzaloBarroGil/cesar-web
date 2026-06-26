@@ -18,15 +18,16 @@ Foundation absorbs auth + layout + shared components. No parallel execution.
 |---|---|---|---|
 | T0.1 | Scaffold Vite + React + shadcn/ui + Tailwind + Biome + TanStack Query provider | feature-developer | — |
 | T0.2 | Shared components: MoneyDisplay, StatusBadge, CUITInput, PeriodPicker, IvaConditionSelect, ConfirmationDialog, ToastProvider, SkeletonCard | feature-developer | T0.1 |
-| T0.3 | API plumbing: axios client (JWT + idempotency interceptor), Zod schemas | feature-developer | T0.1 |
-| T0.4 | Auth: LoginPage, LoginForm, AuthProvider, AuthGuard, RoleGuard, HealthIndicator | feature-developer | T0.2, T0.3 |
-| T0.5 | Layout: AppShell, Sidebar, SidebarLink, Header, ConsorcioSelector, UserMenu, Breadcrumbs, responsive sidebar (hamburger/mobile), HealthIndicator footer | feature-developer | T0.4 |
-| T0.6 | Auth BDD step defs (12 scenarios) + Vitest component tests | quality-engineer | T0.4 |
-| T0.7 | Layout BDD step defs (12 scenarios) + Vitest component tests | quality-engineer | T0.5 |
-| T0.8 | Auth + Layout E2E Playwright tests + axe-core a11y audit on login + app shell routes | quality-engineer | T0.6, T0.7 |
-| T0.9 | Fix a11y findings (keyboard nav on sidebar, ARIA labels on HealthIndicator, focus trap on mobile sidebar) | feature-developer | T0.8 |
-| T0.10 | Re-audit → Foundation a11y clean | quality-engineer | T0.9 |
-| T0.11 | Contract verify: all auth + health MSW handlers aligned with generated types, tsc clean | contract-guardian | T0.6, T0.7 |
+| T0.2b | Vitest unit tests for all 5 shared components: MoneyDisplay, StatusBadge, CUITInput (checksum), PeriodPicker, IvaConditionSelect | quality-engineer | T0.2 |
+| T0.4 | API plumbing: axios client (JWT + idempotency interceptor), Zod schemas | feature-developer | T0.1 |
+| T0.5 | Auth: LoginPage, LoginForm, AuthProvider, AuthGuard, RoleGuard, HealthIndicator | feature-developer | T0.2, T0.4 |
+| T0.6 | Layout: AppShell, Sidebar, SidebarLink, Header, ConsorcioSelector, UserMenu, Breadcrumbs, responsive sidebar (hamburger/mobile), HealthIndicator footer | feature-developer | T0.5 |
+| T0.7 | Auth BDD step defs (12 scenarios) + Vitest component tests | quality-engineer | T0.5 |
+| T0.8 | Layout BDD step defs (12 scenarios) + Vitest component tests | quality-engineer | T0.6 |
+| T0.9 | Auth + Layout E2E Playwright tests + axe-core a11y audit on login + app shell routes | quality-engineer | T0.7, T0.8 |
+| T0.10 | Fix a11y findings (keyboard nav on sidebar, ARIA labels on HealthIndicator, focus trap on mobile sidebar) | feature-developer | T0.9 |
+| T0.11 | Re-audit → Foundation a11y clean | quality-engineer | T0.10 |
+| T0.12 | Contract verify: all auth + health MSW handlers aligned with generated types, tsc clean | contract-guardian | T0.7, T0.8 |
 
 ### T1 — Consorcios (8 tasks, Wave 2)
 
@@ -34,10 +35,10 @@ Depends on T0. Serial execution.
 
 | ID | Task | Agent | Depends On |
 |---|---|---|---|
-| T1.1 | Implement components: ConsorcioList, ConsorcioForm, ConsorcioDetail, UfTable, UfRow, PropietarioList, PropietarioForm, PeriodTimeline, PeriodActions | feature-developer | T0.5 |
+| T1.1 | Implement components: ConsorcioList, ConsorcioForm, ConsorcioDetail, UfTable, UfRow, PropietarioList, PropietarioForm, PeriodTimeline, PeriodActions | feature-developer | T0.6 |
 | T1.2 | Implement hooks + state: useConsorcio, useConsorcios, usePropietarios, usePeriods, all 7 mutation hooks, TanStack Query key map with invalidation | feature-developer | T1.1 |
 | T1.3 | Implement pages + routing: all consorcio routes, tab navigation (General/UFs/Propietarios/Períodos), modal wiring, consorcio selector integration | feature-developer | T1.2 |
-| T1.4 | Write BDD step defs for all 25 scenarios (4 feature files) | quality-engineer | T0.10 |
+| T1.4 | Write BDD step defs for all 25 scenarios (4 feature files) | quality-engineer | T0.11 |
 | T1.5 | Write Vitest component tests: form validation (CUIT checksum, percentage sum, required fields), period state button visibility | quality-engineer | T1.3 |
 | T1.6 | Run E2E Playwright tests + axe-core a11y audit on all consorcio routes | quality-engineer | T1.4, T1.5 |
 | T1.7 | Fix a11y findings | feature-developer | T1.6 |
@@ -52,7 +53,7 @@ Depends on T1 (periods, providers, concepts, categories data). Parallel with T3.
 | T2.1 | Implement components: ExpenseList, ExpenseFilters, ExpenseForm, ExpenseDetail, ExpenseActions, VersionHistory, ProviderList, ProviderForm, ConceptList, CategoryList | feature-developer | T1.3 |
 | T2.2 | Implement hooks + state: useExpenses, useExpenseVersions, useConcepts, useCategories, useProviders, all 9 mutation hooks, optimistic updates (DEC-001) for approve/reject | feature-developer | T2.1 |
 | T2.3 | Implement pages + routing: all expense routes, provider routes, concept/category as sub-views, confirmation dialogs (DEC-002) for tombstone/reject | feature-developer | T2.2 |
-| T2.4 | Write BDD step defs for all 30 scenarios (5 feature files) | quality-engineer | T0.10 |
+| T2.4 | Write BDD step defs for all 30 scenarios (5 feature files) | quality-engineer | T0.11 |
 | T2.5 | Write Vitest component tests: form validation, type toggle logic, multi-term visibility, optimistic rollback, filter interactions | quality-engineer | T2.3 |
 | T2.6 | Run E2E Playwright tests + axe-core a11y audit on all expenses routes | quality-engineer | T2.4, T2.5 |
 | T2.7 | Fix a11y findings | feature-developer | T2.6 |
@@ -67,7 +68,7 @@ Depends on T1 (consorcio IVA condition). Parallel with T2.
 | T3.1 | Implement components: InvoiceList, FacturaAForm, FacturaBForm, FacturaCForm, InvoiceDetail, InvoiceItems, InvoiceTotals, CaeQrDisplay, NotaForm, ReciboForm, ReciboDetail, AnnulButton | feature-developer | T1.3 |
 | T3.2 | Implement hooks + state: useCreateFacturaA/B/C, useAnularInvoice, useCreateNotaCredito, useCreateNotaDebito, useAnularNotaCredito, useAnularNotaDebito, useCreateRecibo, useAnularRecibo. DEC-001 on 4 annul mutations. IVA breakdown client-side computation. Factura B CUIT conditional ($5k threshold). NC remaining amount validation. | feature-developer | T3.1 |
 | T3.3 | Implement pages + routing: all invoice routes, NC/ND linked forms, recibo forms. DEC-002 confirmation dialogs on all 4 annul actions. ACCOUNTANT role guard (annul hidden). | feature-developer | T3.2 |
-| T3.4 | Write BDD step defs for all 28 scenarios (6 feature files) | quality-engineer | T0.10 |
+| T3.4 | Write BDD step defs for all 28 scenarios (6 feature files) | quality-engineer | T0.11 |
 | T3.5 | Write Vitest component tests: A/B/C form differences, IVA rate breakdown, CUIT conditional, NC remaining validation, optimistic annul rollback, ACCOUNTANT role guard on annul buttons | quality-engineer | T3.3 |
 | T3.6 | Run E2E Playwright tests + axe-core a11y audit on all invoices routes | quality-engineer | T3.4, T3.5 |
 | T3.7 | Fix a11y findings | feature-developer | T3.6 |
@@ -82,7 +83,7 @@ Depends on T1 (UFs, periods) + T2 (expense data for allocation display). Serial.
 | T4.1 | Implement components: LiquidacionList, GenerateModal, LiquidacionDetail, ExpenseAllocationTable, FinancialSummary, IssueButton, PdfButton, CertificadoList, CertificadoDetail, SignButton | feature-developer | T1.3, T2.3 |
 | T4.2 | Implement hooks + state: useLiquidaciones, useLiquidacionDetail, useGenerateLiquidacion, useBatchGenerate, useIssueLiquidacion, useCertificados, useCertificadoDetail, useGenerateCertificado, useSignCertificado. DEC-001 on issue/sign. DEC-002 on issue/sign. No domain math — display-only. | feature-developer | T4.1 |
 | T4.3 | Implement pages + routing: all debt routes, batch confirmation dialog, PDF placeholder (disabled + tooltip "No disponible próximamente"), financial summary formatting (Intl.NumberFormat es-AR) | feature-developer | T4.2 |
-| T4.4 | Write BDD step defs for all 22 scenarios (3 feature files) | quality-engineer | T0.10 |
+| T4.4 | Write BDD step defs for all 22 scenarios (3 feature files) | quality-engineer | T0.11 |
 | T4.5 | Write Vitest component tests: allocation table rendering, financial summary formatting, status-dependent button visibility, PDF button states, optimistic rollback for issue/sign | quality-engineer | T4.3 |
 | T4.6 | Run E2E Playwright tests + axe-core a11y audit on all debt routes | quality-engineer | T4.4, T4.5 |
 | T4.7 | Fix a11y findings | feature-developer | T4.6 |
@@ -97,7 +98,7 @@ Depends on T4 (liquidaciones for reference). Parallel with T6.
 | T5.1 | Implement components: PaymentList, PaymentFilters, PaymentCreateModal, PaymentDetail, ReverseButton, UnitBalanceCard, UnitHistoryTable, PaymentMethodBadge, NoVoucherWarning | feature-developer | T4.3 |
 | T5.2 | Implement hooks + state: usePayments, usePaymentDetail, useCreatePayment, useReversePayment, useUnitBalance, useUnitHistory. DEC-001 on reverse. DEC-002 on reverse. Voucher conditional (CASH only). | feature-developer | T5.1 |
 | T5.3 | Implement pages + routing: payments list + balances tab, creation modal, detail page. Tab navigation (Pagos / Balances). | feature-developer | T5.2 |
-| T5.4 | Write BDD step defs for all 18 scenarios (3 feature files) | quality-engineer | T0.10 |
+| T5.4 | Write BDD step defs for all 18 scenarios (3 feature files) | quality-engineer | T0.11 |
 | T5.5 | Write Vitest component tests: amount > 0 validation, voucher field conditional, CASH no-voucher warning badge, optimistic reversal rollback, balance computation | quality-engineer | T5.3 |
 | T5.6 | Run E2E Playwright tests + axe-core a11y audit on all payments routes | quality-engineer | T5.4, T5.5 |
 | T5.7 | Fix a11y findings | feature-developer | T5.6 |
@@ -112,7 +113,7 @@ Depends on T1 (periods) + T3 (invoice linking). Parallel with T5.
 | T6.1 | Implement components: EntryList, DirectionFilter, DateRangeFilter, EntryCreateModal, EntryDetail, VersionHistory, EntryUpdateForm, CancelButton, DirectionBadge, SubTypeSelector, SinglePeriodSummary, CrossPeriodSummary | feature-developer | T1.3, T3.3 |
 | T6.2 | Implement hooks + state: useEntries, useEntryDetail, useCreateEntry, useUpdateEntry, useCancelEntry, useSinglePeriodSummary, useCrossPeriodSummary. DEC-001 on cancel. DEC-002 on cancel. Sub-type conditional logic (invoice_id for INCOME_RENT, migration tags for OUTPUT_TEMP). | feature-developer | T6.1 |
 | T6.3 | Implement pages + routing: entries list with filters, creation modal, detail with update form, summary with tabs (Por Período / Acumulado). Net flow coloring (green/red). | feature-developer | T6.2 |
-| T6.4 | Write BDD step defs for all 18 scenarios (3 feature files) | quality-engineer | T0.10 |
+| T6.4 | Write BDD step defs for all 18 scenarios (3 feature files) | quality-engineer | T0.11 |
 | T6.5 | Write Vitest component tests: direction toggle switches sub-types, invoice_id conditional visibility, date-in-period-range validation, optimistic cancel rollback, net flow sign coloring | quality-engineer | T6.3 |
 | T6.6 | Run E2E Playwright tests + axe-core a11y audit on all incomes-outputs routes | quality-engineer | T6.4, T6.5 |
 | T6.7 | Fix a11y findings | feature-developer | T6.6 |
@@ -127,7 +128,7 @@ Depends on T4 + T5 + T2 + T6 (reads all). Serial. Reduced to 5 implementation + 
 | T7.1 | Implement components: DashboardPage, MetricCard (loading/ready/error/empty states), PeriodSelector, RecentActivityFeed, IncomeExpenseCard, DashboardGrid (2×3 desktop, stacked mobile) | feature-developer | T4.3, T5.3, T2.3, T6.3 |
 | T7.2 | Implement hooks + state: useQueries([...]) composing 4 source queries. Metric derivation (debt sum, collection rate, pending count, active count). Period default to current OPEN. ConsorcioContext integration. | feature-developer | T7.1 |
 | T7.3 | Implement page + routing: DashboardPage at "/". Period selector → all metrics refetch. Drill-down on card click → navigate to source module. Empty state for new consorcio. Error state with per-card retry. | feature-developer | T7.2 |
-| T7.4 | Write BDD step defs for all 12 scenarios (1 feature file) | quality-engineer | T0.10 |
+| T7.4 | Write BDD step defs for all 12 scenarios (1 feature file) | quality-engineer | T0.11 |
 | T7.5 | Write Vitest component tests + E2E Playwright tests + axe-core a11y audit: metric derivation correctness, period switch refetch, per-card error isolation, drill-down navigation, 2×3 grid layout, collection rate coloring | quality-engineer | T7.3 |
 | T7.6 | Contract verify: all cross-feature query imports resolved. No new MSW handlers needed. No new orval generation. tsc clean. | contract-guardian | T7.5 |
 
@@ -192,14 +193,14 @@ Dependency legend:
 
 | Wave | Features | Tasks | Parallel? | Gate Count |
 |---|---|---|---|---|
-| W1 | T0 Foundation | 11 | Serial | 11 ◉ |
+| W1 | T0 Foundation | 12 | Serial | 12 ◉ |
 | W2 | T1 Consorcios | 8 | Serial | 8 ◉ |
 | W3 | T2 Expenses ∥ T3 Invoices | 16 (8+8) | Yes | 16 ◉ |
 | W4 | T4 Debt | 8 | Serial | 8 ◉ |
 | W5 | T5 Payments ∥ T6 Incomes/Outputs | 16 (8+8) | Yes | 16 ◉ |
 | W6 | T7 Dashboard | 6 | Serial | 6 ◉ |
 | W7 | T8 Final Validation | 4 | Serial | 4 ◉ |
-| **Total** | | **69** | | **69 ◉** |
+| **Total** | | **70** | | **70 ◉** |
 
 ---
 
@@ -207,9 +208,9 @@ Dependency legend:
 
 | Agent | Tasks | % | Task IDs |
 |---|---|---|---|
-| **quality-engineer** | 28 | 41% | T0.6–T0.8, T0.10, T1.4–T1.6, T2.4–T2.6, T3.4–T3.6, T4.4–T4.6, T5.4–T5.6, T6.4–T6.6, T7.4–T7.5, T8.1–T8.2 |
-| **feature-developer** | 29 | 42% | T0.1–T0.5, T0.9, T1.1–T1.3, T1.7, T2.1–T2.3, T2.7, T3.1–T3.3, T3.7, T4.1–T4.3, T4.7, T5.1–T5.3, T5.7, T6.1–T6.3, T6.7, T7.1–T7.3 |
-| **contract-guardian** | 10 | 14% | T0.11, T1.8, T2.8, T3.8, T4.8, T5.8, T6.8, T7.6, T8.3 |
+| **quality-engineer** | 29 | 41% | T0.2b, T0.7–T0.9, T0.11, T1.4–T1.6, T2.4–T2.6, T3.4–T3.6, T4.4–T4.6, T5.4–T5.6, T6.4–T6.6, T7.4–T7.5, T8.1–T8.2 |
+| **feature-developer** | 29 | 41% | T0.1–T0.2, T0.4–T0.6, T0.10, T1.1–T1.3, T1.7, T2.1–T2.3, T2.7, T3.1–T3.3, T3.7, T4.1–T4.3, T4.7, T5.1–T5.3, T5.7, T6.1–T6.3, T6.7, T7.1–T7.3 |
+| **contract-guardian** | 10 | 14% | T0.12, T1.8, T2.8, T3.8, T4.8, T5.8, T6.8, T7.6, T8.3 |
 | **constitution-architect** | 2 | 3% | T8.4 |
 | **Total** | **69** | | |
 
@@ -226,7 +227,7 @@ constitution-arch: ██ 2 tasks (3%)
 
 | Feature | feature-developer | quality-engineer | contract-guardian |
 |---|---|---|---|
-| T0 Foundation | 6 | 4 | 1 |
+| T0 Foundation | 6 | 5 | 1 |
 | T1 Consorcios | 4 | 3 | 1 |
 | T2 Expenses | 4 | 3 | 1 |
 | T3 Invoices | 4 | 3 | 1 |
@@ -242,7 +243,7 @@ constitution-arch: ██ 2 tasks (3%)
 
 1. **Wave 1 — Foundation**: Serial. All features depend on shared components,
    auth, and layout. Quality-engineer writes auth + layout BDD step defs while
-   feature-developer builds them. Contract-guardian verifies at gate T0.11.
+   feature-developer builds them. Contract-guardian verifies at gate T0.12.
 
 2. **Wave 2 — Consorcios**: Serial. Foundation for all domain features.
    Unlocks expenses, invoices, and debt.
@@ -285,7 +286,7 @@ critical path, provided the parallel agent is available.
   the HITL approves the wave transition.
 - Within a parallel wave (W3, W5), each feature has independent gates.
   Feature B can proceed through its gates while Feature A is still pending.
-- The T0.11 gate is a wave gate — W2 cannot start until T0.11 passes.
+- The T0.12 gate is a wave gate — W2 cannot start until T0.12 passes.
   Same for T1.8 → W3, T2.8+T3.8 → W4, T4.8 → W5, T5.8+T6.8 → W6,
   T7.6 → W7.
 
@@ -299,15 +300,16 @@ acknowledgment before the agent proceeds to the next task.
 ```
 ◉ T0.1  feature-developer   Scaffold project                              → HITL ✓
 ◉ T0.2  feature-developer   Shared components                              → HITL ✓
-◉ T0.3  feature-developer   API plumbing                                   → HITL ✓
-◉ T0.4  feature-developer   Auth: Login + guards                           → HITL ✓
-◉ T0.5  feature-developer   Layout: AppShell + sidebar                     → HITL ✓
-◉ T0.6  quality-engineer    Auth BDD step defs + component tests           → HITL ✓
-◉ T0.7  quality-engineer    Layout BDD step defs + component tests         → HITL ✓
-◉ T0.8  quality-engineer    E2E + a11y audit on auth + layout routes       → HITL ✓
-◉ T0.9  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T0.10 quality-engineer    Re-audit → Foundation a11y clean               → HITL ✓
-◉ T0.11 contract-guardian   Contract verify auth + health endpoints        → HITL ✓
+◉ T0.2b quality-engineer    Vitest tests for shared components              → HITL ✓
+◉ T0.4  feature-developer   API plumbing                                   → HITL ✓
+◉ T0.5  feature-developer   Auth: Login + guards                           → HITL ✓
+◉ T0.6  feature-developer   Layout: AppShell + sidebar                     → HITL ✓
+◉ T0.7  quality-engineer    Auth BDD step defs + component tests           → HITL ✓
+◉ T0.8  quality-engineer    Layout BDD step defs + component tests         → HITL ✓
+◉ T0.9  quality-engineer    E2E + a11y audit on auth + layout routes       → HITL ✓
+◉ T0.10 feature-developer   Fix a11y findings                              → HITL ✓
+◉ T0.11 quality-engineer    Re-audit → Foundation a11y clean               → HITL ✓
+◉ T0.12 contract-guardian   Contract verify auth + health endpoints        → HITL ✓
 ── ◉ WAVE 1 COMPLETE ──→ W2
 
 ◉ T1.1  feature-developer   Components: ConsorcioList, UfTable, etc.      → HITL ✓
