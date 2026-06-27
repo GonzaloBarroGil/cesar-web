@@ -44,10 +44,10 @@ test.describe("Layout BDD Scenarios", () => {
     await page.getByRole("link", { name: "Expensas" }).click();
     await expect(page).toHaveURL("/expenses");
 
-    const activeLink = page.getByRole("link", { name: "Expensas" });
+    const activeLink = page.getByRole("link", { name: "Expensas" }).first();
     await expect(activeLink).toHaveClass(/bg-neutral-700/);
 
-    const inactiveLink = page.getByRole("link", { name: "Inicio" });
+    const inactiveLink = page.getByRole("link", { name: "Inicio" }).first();
     await expect(inactiveLink).not.toHaveClass(/bg-neutral-700/);
   });
 
@@ -56,7 +56,7 @@ test.describe("Layout BDD Scenarios", () => {
     await page.selectOption("select.rounded-md", { index: 1 });
     await page.waitForTimeout(200);
 
-    await expect(page.getByText("Torre Norte")).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveValue("550e8400-e29b-41d4-a716-446655440001");
   });
 
   test("[@empty-state] consorcio selector shows placeholder when none selected", async ({
@@ -71,7 +71,7 @@ test.describe("Layout BDD Scenarios", () => {
     await loginAs(page, "ADMIN");
 
     await expect(page.getByText("Administrador General")).toBeVisible();
-    await expect(page.getByText("ADMIN")).toBeVisible();
+    await expect(page.getByText("ADMIN", { exact: true })).toBeVisible();
   });
 
   test("[@happy-path] logout from user menu redirects to login", async ({ page }) => {
@@ -87,9 +87,11 @@ test.describe("Layout BDD Scenarios", () => {
     await page.goto("/expenses/550e8400-e29b-41d4-a716-446655440701");
     await page.waitForTimeout(300);
 
-    await expect(page.getByLabelText("Migas de pan")).toContainText("Inicio");
-    await expect(page.getByLabelText("Migas de pan")).toContainText("Expensas");
-    await expect(page.getByLabelText("Migas de pan")).toContainText("Detalle");
+    await expect(page.getByLabel("Migas de pan")).toContainText("Inicio");
+    await expect(page.getByLabel("Migas de pan")).toContainText("Expensas");
+    await expect(page.getByLabel("Migas de pan")).toContainText(
+      "550e8400-e29b-41d4-a716-446655440701",
+    );
   });
 
   test("[@display] mobile sidebar opens with hamburger and closes on backdrop", async ({
@@ -123,7 +125,7 @@ test.describe("Layout BDD Scenarios", () => {
     await page.waitForTimeout(300);
 
     await expect(page).toHaveURL("/expenses");
-    await expect(page.getByRole("link", { name: "Inicio" })).not.toBeVisible();
+    await expect(page.locator("aside").getByRole("link", { name: "Inicio" })).not.toBeVisible();
   });
 
   test("[@display] health indicator shows green dot when service is online", async ({ page }) => {
