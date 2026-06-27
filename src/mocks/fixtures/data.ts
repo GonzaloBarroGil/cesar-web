@@ -261,7 +261,7 @@ export interface IncomeOutputData {
 export interface UserData {
   id: string;
   username: string;
-  role: string;
+  role: "ADMIN" | "ACCOUNTANT";
   consorcio_id: string | null;
   nombre_completo: string;
 }

@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 
 interface HealthResponse {
   status: "ok" | "degraded";
-  postgres?: string;
-  redis?: string;
-  nats?: string;
+  postgres: string;
+  redis: string;
+  nats: string;
 }
 
 function HealthIndicator() {
