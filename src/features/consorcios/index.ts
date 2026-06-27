@@ -1,0 +1,12 @@
+export { ConsorcioList } from "./ConsorcioList";
+export { ConsorcioForm } from "./ConsorcioForm";
+export { ConsorcioDetail } from "./ConsorcioDetail";
+export { UfTable } from "./UfTable";
+export { PropietarioList } from "./PropietarioList";
+export { PropietarioForm } from "./PropietarioForm";
+export { PeriodTimeline } from "./PeriodTimeline";
+export { ConsorcioDetailPage } from "./ConsorcioDetailPage";
+export { ConsorcioFormPage } from "./ConsorcioFormPage";
+export { ConsorciosPage } from "./ConsorciosPage";
+export { PropietarioNewPage } from "./PropietarioNewPage";
+export { consorcioKeys } from "./queryKeys";

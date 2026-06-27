@@ -1,6 +1,12 @@
 import { AuthProvider } from "@/features/auth/AuthContext";
 import { AuthGuard, RoleGuard } from "@/features/auth/AuthGuard";
 import { LoginForm } from "@/features/auth/LoginForm";
+import {
+  ConsorcioDetailPage,
+  ConsorcioFormPage,
+  ConsorciosPage,
+  PropietarioNewPage,
+} from "@/features/consorcios";
 import { AppShell } from "@/features/layout/AppShell";
 import { Route, Routes } from "react-router-dom";
 
@@ -22,7 +28,11 @@ function App() {
             <Route index element={<Placeholder title="Panel de Control" />} />
             <Route path="invoices/*" element={<Placeholder title="Facturación" />} />
             <Route element={<RoleGuard requiredRole="ADMIN" />}>
-              <Route path="consorcios/*" element={<Placeholder title="Consorcios" />} />
+              <Route path="consorcios" element={<ConsorciosPage />} />
+              <Route path="consorcios/new" element={<ConsorcioFormPage />} />
+              <Route path="consorcios/:id" element={<ConsorcioDetailPage />} />
+              <Route path="consorcios/:id/edit" element={<ConsorcioFormPage />} />
+              <Route path="consorcios/:id/propietarios/new" element={<PropietarioNewPage />} />
               <Route path="expenses/*" element={<Placeholder title="Expensas" />} />
               <Route path="debt/*" element={<Placeholder title="Deuda" />} />
               <Route path="payments/*" element={<Placeholder title="Pagos" />} />
