@@ -59,5 +59,5 @@ function useConsorcio(): ConsorcioState {
   return context;
 }
 
-export { ConsorcioProvider, useConsorcio };
+export { ConsorcioContext, ConsorcioProvider, useConsorcio };
 export type { ConsorcioListItem };
