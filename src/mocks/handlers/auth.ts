@@ -8,7 +8,14 @@ export const authHandlers = [
   http.post("http://localhost:3000/api/v1/auth/login", async ({ request }) => {
     const body = (await request.json()) as { username: string; password: string };
     const user = users.find((u) => u.username === body?.username);
-    if (!user) {
+
+    // Check password: only admin123 for admin, contador123 for contador
+    const validPasswords: Record<string, string> = {
+      admin: "admin123",
+      contador: "contador123",
+    };
+
+    if (!user || validPasswords[user.username] !== body?.password) {
       return HttpResponse.json(
         { error: { code: "UNAUTHORIZED", message: "Invalid credentials" } },
         { status: 401 },

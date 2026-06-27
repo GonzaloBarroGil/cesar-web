@@ -123,5 +123,5 @@ function useAuth(): AuthState {
   return context;
 }
 
-export { AuthProvider, useAuth };
+export { AuthContext, AuthProvider, useAuth };
 export type { User, AuthState };
