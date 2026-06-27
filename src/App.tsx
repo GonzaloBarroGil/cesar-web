@@ -6,7 +6,7 @@ import { Route, Routes } from "react-router-dom";
 
 function Placeholder({ title }: { title: string }) {
   return (
-    <div className="flex items-center justify-center h-64 text-neutral-400 text-lg">
+    <div className="flex items-center justify-center h-64 text-neutral-500 text-lg">
       {title} — Próximamente
     </div>
   );

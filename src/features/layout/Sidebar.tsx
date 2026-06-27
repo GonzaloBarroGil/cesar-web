@@ -41,6 +41,7 @@ function Sidebar({ open, onClose }: SidebarProps) {
           onKeyDown={(e) => {
             if (e.key === "Escape" || e.key === "Enter") onClose();
           }}
+          aria-hidden="true"
         />
       )}
       <aside
@@ -48,6 +49,10 @@ function Sidebar({ open, onClose }: SidebarProps) {
           "flex flex-col bg-neutral-900 text-neutral-100",
           isDesktop ? "w-56 min-h-screen" : "fixed inset-y-0 left-0 z-40 w-56",
         )}
+        aria-modal={!isDesktop ? "true" : undefined}
+        role={!isDesktop ? "dialog" : undefined}
+        aria-label="Navegación principal"
+        data-testid="sidebar"
       >
         <div className="px-4 py-5 border-b border-neutral-700">
           <span className="text-lg font-semibold tracking-tight">CESAR</span>

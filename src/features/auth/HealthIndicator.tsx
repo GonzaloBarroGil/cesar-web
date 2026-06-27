@@ -39,13 +39,15 @@ function HealthIndicator() {
   };
 
   return (
-    <span
-      className={"inline-flex items-center gap-1.5 text-xs text-neutral-500"}
+    <output
+      className="inline-flex items-center gap-1.5 text-xs text-neutral-500"
+      aria-live="polite"
+      aria-label={labels[status]}
       title={labels[status]}
     >
-      <span className={`h-2 w-2 rounded-full ${colors[status]}`} />
+      <span className={`h-2 w-2 rounded-full ${colors[status]}`} aria-hidden="true" />
       <span className="hidden sm:inline">{labels[status]}</span>
-    </span>
+    </output>
   );
 }
 

@@ -7,16 +7,23 @@ import { useConsorcio } from "./ConsorcioContext";
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  sidebarOpen?: boolean;
 }
 
-function Header({ onMenuToggle }: HeaderProps) {
+function Header({ onMenuToggle, sidebarOpen = false }: HeaderProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   return (
     <header className="flex items-center justify-between h-14 px-4 border-b bg-white">
       <div className="flex items-center gap-3">
         {!isDesktop && (
-          <Button variant="ghost" size="icon" onClick={onMenuToggle} aria-label="Abrir menú">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuToggle}
+            aria-label={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={sidebarOpen}
+          >
             <Menu className="h-5 w-5" />
           </Button>
         )}
@@ -71,11 +78,17 @@ function UserMenu() {
       <div className="hidden sm:flex items-center gap-2">
         <User className="h-4 w-4 text-neutral-400" />
         <span className="text-sm text-neutral-700">{user.nombre_completo}</span>
-        <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
           {user.role}
         </span>
       </div>
-      <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Cerrar sesión">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLogout}
+        aria-label="Cerrar sesión"
+        data-testid="logout-button"
+      >
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline ml-2">Salir</span>
       </Button>
