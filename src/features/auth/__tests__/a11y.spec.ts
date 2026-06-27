@@ -19,27 +19,7 @@ async function a11yAudit(page: ReturnType<typeof test.info>["page"]) {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
 
-  const knownSelectors = [".px-1\\.5", ".h-64", "footer > span:nth-child(1)"];
-
-  const knownViolations = results.violations.filter((v) =>
-    v.nodes.every((n) => knownSelectors.some((s) => n.target.join(" ") === s)),
-  );
-
-  const unknownViolations = results.violations.filter((v) =>
-    v.nodes.some((n) => !knownSelectors.some((s) => n.target.join(" ") === s)),
-  );
-
-  if (unknownViolations.length > 0) {
-    console.error("UNEXPECTED a11y violations:", JSON.stringify(unknownViolations, null, 2));
-  }
-
-  if (knownViolations.length > 0) {
-    console.log(
-      `Known color-contrast violations (${knownViolations.length}): T0.10 will fix these`,
-    );
-  }
-
-  expect(unknownViolations, "No unexpected a11y violations").toEqual([]);
+  expect(results.violations).toEqual([]);
 }
 
 test.describe("Auth a11y audit", () => {
