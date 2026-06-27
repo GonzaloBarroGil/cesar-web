@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/features/auth/AuthContext";
-import { useConsorcio } from "./ConsorcioContext";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/AuthContext";
 import { useMediaQuery } from "@/lib/hooks";
-import { Menu, LogOut, User, Building } from "lucide-react";
+import { Building, LogOut, Menu, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useConsorcio } from "./ConsorcioContext";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -49,9 +49,7 @@ function ConsorcioSelector() {
         ))}
       </select>
       {selected && (
-        <span className="text-xs text-neutral-500 hidden sm:inline">
-          CUIT: {selected.cuit}
-        </span>
+        <span className="text-xs text-neutral-500 hidden sm:inline">CUIT: {selected.cuit}</span>
       )}
     </div>
   );

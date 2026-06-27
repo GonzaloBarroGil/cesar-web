@@ -7,7 +7,7 @@ interface MoneyDisplayProps {
 }
 
 function MoneyDisplay({ amount, className, showColor = false }: MoneyDisplayProps) {
-  const value = parseFloat(amount.amount || "0");
+  const value = Number.parseFloat(amount.amount || "0");
   const formatted = Number.isNaN(value)
     ? "$ 0,00"
     : new Intl.NumberFormat("es-AR", {

@@ -1,8 +1,8 @@
-import { NavLink } from "react-router-dom";
 import { useAuth } from "@/features/auth/AuthContext";
-import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/hooks";
-import { Building, Receipt, FileText, Scale, DollarSign, TrendingUp, Home } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Building, DollarSign, FileText, Home, Receipt, Scale, TrendingUp } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 interface NavItem {
   to: string;
@@ -35,7 +35,13 @@ function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
       {!isDesktop && open && (
-        <div className="fixed inset-0 z-30 bg-black/50" onClick={onClose} />
+        <div
+          className="fixed inset-0 z-30 bg-black/50"
+          onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" || e.key === "Enter") onClose();
+          }}
+        />
       )}
       <aside
         className={cn(

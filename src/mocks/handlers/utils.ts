@@ -40,7 +40,9 @@ function extractToken(request: Request): { username: string; role: string } | nu
   const auth = request.headers.get("Authorization");
   if (!auth?.startsWith("Bearer ")) return null;
   try {
-    const payload = JSON.parse(atob(auth.split(".")[1]!));
+    const tokenParts = auth.split(".");
+    if (!tokenParts[1]) return null;
+    const payload = JSON.parse(atob(tokenParts[1]));
     return { username: payload.username || "admin", role: payload.role || "ADMIN" };
   } catch {
     return null;
@@ -88,17 +90,17 @@ function validationError(message: string, details?: string[]): Response {
 }
 
 function conflictError(message: string): Response {
-  return new HttpResponse(
-    JSON.stringify({ error: { code: "CONFLICT", message } }),
-    { status: 409, headers: { "Content-Type": "application/json" } },
-  );
+  return new HttpResponse(JSON.stringify({ error: { code: "CONFLICT", message } }), {
+    status: 409,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 function badRequest(message: string): Response {
-  return new HttpResponse(
-    JSON.stringify({ error: { code: "BAD_REQUEST", message } }),
-    { status: 400, headers: { "Content-Type": "application/json" } },
-  );
+  return new HttpResponse(JSON.stringify({ error: { code: "BAD_REQUEST", message } }), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 function notImplemented(): Response {
@@ -108,13 +110,12 @@ function notImplemented(): Response {
   );
 }
 
-function wrapMutation(
-  request: Request,
-  fn: (body: unknown) => unknown,
-): Response {
+function wrapMutation(request: Request, fn: (body: unknown) => unknown): Response {
   const idempotency = checkIdempotency(getIdempotencyKey(request));
   if (idempotency) {
-    return HttpResponse.json(idempotency.body as Record<string, unknown>, { status: idempotency.status });
+    return HttpResponse.json(idempotency.body as Record<string, unknown>, {
+      status: idempotency.status,
+    });
   }
   try {
     let body: unknown = null;

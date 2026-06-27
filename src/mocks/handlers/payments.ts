@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { payments, TORRE_NORTE_ID } from "../fixtures/data";
+import { TORRE_NORTE_ID, payments } from "../fixtures/data";
 import type { PaymentData } from "../fixtures/data";
 
 function error(status: number, code: string, message: string) {
@@ -49,15 +49,15 @@ export const paymentsHandlers = [
 
   // Reverse payment
   http.post("http://localhost:3000/api/v1/payments/:id/reverse", ({ params }) => {
-    const idx = payments.findIndex((p) => p.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Payment not found");
+    const payment = payments.find((p) => p.id === params.id);
+    if (!payment) return error(404, "NOT_FOUND", "Payment not found");
     const reversal: PaymentData = {
       id: crypto.randomUUID(),
-      consorcio_id: payments[idx]!.consorcio_id,
-      unidad_funcional_id: payments[idx]!.unidad_funcional_id,
-      period_code: payments[idx]!.period_code,
-      amount: payments[idx]!.amount,
-      medio_pago: payments[idx]!.medio_pago,
+      consorcio_id: payment.consorcio_id,
+      unidad_funcional_id: payment.unidad_funcional_id,
+      period_code: payment.period_code,
+      amount: payment.amount,
+      medio_pago: payment.medio_pago,
       voucher_number: null,
       no_voucher_warning: false,
       recibo_id: null,
@@ -66,20 +66,25 @@ export const paymentsHandlers = [
       version: 1,
       created_at: new Date().toISOString(),
     };
-    payments[idx]!.status = "REVERSED";
+    payment.status = "REVERSED";
     payments.push(reversal);
     return HttpResponse.json(reversal, { status: 201 });
   }),
 
   // Unit balance
   http.get("http://localhost:3000/api/v1/payments/unit/:unitId/balance", ({ params }) => {
-    const unitPayments = payments.filter((p) => p.unidad_funcional_id === params.unitId && p.status === "ACTIVE");
-    const total = unitPayments.reduce((s, p) => s + parseFloat(p.amount.amount || "0"), 0);
-    return HttpResponse.json({
-      unit_id: params.unitId,
-      total_paid: { amount: total.toFixed(2), currency: "ARS" },
-      payment_count: unitPayments.length,
-    }, { status: 200 });
+    const unitPayments = payments.filter(
+      (p) => p.unidad_funcional_id === params.unitId && p.status === "ACTIVE",
+    );
+    const total = unitPayments.reduce((s, p) => s + Number.parseFloat(p.amount.amount || "0"), 0);
+    return HttpResponse.json(
+      {
+        unit_id: params.unitId,
+        total_paid: { amount: total.toFixed(2), currency: "ARS" },
+        payment_count: unitPayments.length,
+      },
+      { status: 200 },
+    );
   }),
 
   // Payment history

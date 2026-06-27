@@ -1,13 +1,13 @@
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { InputHTMLAttributes } from "react";
-import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
+import { useCallback, useEffect, useState } from "react";
 
 function cuitChecksum(cuit: string): boolean {
   if (!/^\d{11}$/.test(cuit)) return false;
   const multipliers = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
   const digits = cuit.slice(0, 10).split("").map(Number);
-  const sum = digits.reduce((acc, d, i) => acc + d * multipliers[i]!, 0);
+  const sum = digits.reduce((acc, d, i) => acc + d * (multipliers[i] ?? 0), 0);
   const mod = 11 - (sum % 11);
   const checkDigit = mod === 11 ? 0 : mod === 10 ? 9 : mod;
   return checkDigit === Number(cuit[10]);

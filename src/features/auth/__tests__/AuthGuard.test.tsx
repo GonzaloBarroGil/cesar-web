@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { MockAuthProvider } from "./mocks";
+import { describe, expect, it } from "vitest";
 import { AuthGuard, RoleGuard } from "../AuthGuard";
+import { MockAuthProvider } from "./mocks";
 
 describe("AuthGuard", () => {
   it("shows loading skeleton when session is being validated", () => {
@@ -58,7 +58,13 @@ describe("AuthGuard", () => {
         authState={{
           isAuthenticated: true,
           isLoading: false,
-          user: { id: "1", username: "admin", role: "ADMIN", consorcio_id: null, nombre_completo: "Admin" },
+          user: {
+            id: "1",
+            username: "admin",
+            role: "ADMIN",
+            consorcio_id: null,
+            nombre_completo: "Admin",
+          },
         }}
       >
         <MemoryRouter>
@@ -76,8 +82,20 @@ describe("AuthGuard", () => {
 });
 
 describe("RoleGuard", () => {
-  const adminUser = { id: "1", username: "admin", role: "ADMIN" as const, consorcio_id: null, nombre_completo: "Admin" };
-  const accountantUser = { id: "2", username: "contador", role: "ACCOUNTANT" as const, consorcio_id: null, nombre_completo: "Contador" };
+  const adminUser = {
+    id: "1",
+    username: "admin",
+    role: "ADMIN" as const,
+    consorcio_id: null,
+    nombre_completo: "Admin",
+  };
+  const accountantUser = {
+    id: "2",
+    username: "contador",
+    role: "ACCOUNTANT" as const,
+    consorcio_id: null,
+    nombre_completo: "Contador",
+  };
 
   it("allows ADMIN to access ADMIN route", () => {
     render(
@@ -85,7 +103,7 @@ describe("RoleGuard", () => {
         <MemoryRouter initialEntries={["/consorcios"]}>
           <Routes>
             <Route path="/invoices" element={<div>Invoices</div>} />
-            <Route element={<RoleGuard role="ADMIN" />}>
+            <Route element={<RoleGuard requiredRole="ADMIN" />}>
               <Route path="/consorcios" element={<div>Consorcios</div>} />
             </Route>
           </Routes>
@@ -102,7 +120,7 @@ describe("RoleGuard", () => {
         <MemoryRouter initialEntries={["/consorcios"]}>
           <Routes>
             <Route path="/invoices" element={<div>Invoices</div>} />
-            <Route element={<RoleGuard role="ADMIN" />}>
+            <Route element={<RoleGuard requiredRole="ADMIN" />}>
               <Route path="/consorcios" element={<div>Consorcios</div>} />
             </Route>
           </Routes>
@@ -119,7 +137,7 @@ describe("RoleGuard", () => {
       <MockAuthProvider authState={{ isAuthenticated: true, user: accountantUser }}>
         <MemoryRouter initialEntries={["/invoices"]}>
           <Routes>
-            <Route element={<RoleGuard role={["ADMIN", "ACCOUNTANT"]} />}>
+            <Route element={<RoleGuard requiredRole={["ADMIN", "ACCOUNTANT"]} />}>
               <Route path="/invoices" element={<div>Invoices</div>} />
             </Route>
           </Routes>

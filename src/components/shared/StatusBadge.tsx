@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type StatusColor =
-  | "green" | "red" | "yellow" | "blue" | "purple" | "grey" | "orange";
+type StatusColor = "green" | "red" | "yellow" | "blue" | "purple" | "grey" | "orange";
 
 const statusMap: Record<string, { label: string; color: StatusColor; strikethrough?: boolean }> = {
   ACTIVE: { label: "Activo", color: "green" },

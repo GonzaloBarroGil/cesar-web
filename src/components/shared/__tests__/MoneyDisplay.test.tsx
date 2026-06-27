@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { MoneyDisplay } from "../MoneyDisplay";
 
 describe("MoneyDisplay", () => {
@@ -33,9 +33,7 @@ describe("MoneyDisplay", () => {
   });
 
   it("does not apply color class when showColor is false", () => {
-    const { container } = render(
-      <MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} />,
-    );
+    const { container } = render(<MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} />);
     expect(container.firstChild).not.toHaveClass("text-green-600");
     expect(container.firstChild).not.toHaveClass("text-red-600");
   });
@@ -51,9 +49,7 @@ describe("MoneyDisplay", () => {
   });
 
   it("renders with tabular-nums class for aligned columns", () => {
-    const { container } = render(
-      <MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} />,
-    );
+    const { container } = render(<MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} />);
     expect(container.firstChild).toHaveClass("tabular-nums");
   });
 });

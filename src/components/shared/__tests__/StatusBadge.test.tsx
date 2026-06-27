@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { StatusBadge } from "../StatusBadge";
 
 describe("StatusBadge", () => {
@@ -87,6 +87,13 @@ describe("StatusBadge", () => {
   it("renders with correct badge base classes", () => {
     render(<StatusBadge status="ACTIVE" />);
     const badge = screen.getByText("Activo");
-    expect(badge).toHaveClass("inline-flex", "items-center", "rounded-md", "border", "text-xs", "font-medium");
+    expect(badge).toHaveClass(
+      "inline-flex",
+      "items-center",
+      "rounded-md",
+      "border",
+      "text-xs",
+      "font-medium",
+    );
   });
 });

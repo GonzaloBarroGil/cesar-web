@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
-import { liquidaciones, certifidadosDeuda, TORRE_NORTE_ID } from "../fixtures/data";
-import type { LiquidacionData, CertificadoDeudaData } from "../fixtures/data";
+import { TORRE_NORTE_ID, certifidadosDeuda, liquidaciones } from "../fixtures/data";
+import type { CertificadoDeudaData, LiquidacionData } from "../fixtures/data";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -9,7 +9,11 @@ function error(status: number, code: string, message: string) {
 export const debtHandlers = [
   // Generate liquidacion (single)
   http.post("http://localhost:3000/api/v1/debt/liquidaciones", async ({ request }) => {
-    const body = (await request.json()) as { consorcio_id: string; period_code: string; unidad_funcional_id: string };
+    const body = (await request.json()) as {
+      consorcio_id: string;
+      period_code: string;
+      unidad_funcional_id: string;
+    };
     const liq: LiquidacionData = {
       id: crypto.randomUUID(),
       consorcio_id: body.consorcio_id || TORRE_NORTE_ID,
@@ -84,11 +88,11 @@ export const debtHandlers = [
 
   // Issue liquidacion
   http.put("http://localhost:3000/api/v1/debt/liquidaciones/:id/issue", ({ params }) => {
-    const idx = liquidaciones.findIndex((l) => l.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Liquidacion not found");
-    liquidaciones[idx]!.status = "ISSUED";
-    liquidaciones[idx]!.issued_at = new Date().toISOString();
-    return HttpResponse.json(liquidaciones[idx], { status: 200 });
+    const liq = liquidaciones.find((l) => l.id === params.id);
+    if (!liq) return error(404, "NOT_FOUND", "Liquidacion not found");
+    liq.status = "ISSUED";
+    liq.issued_at = new Date().toISOString();
+    return HttpResponse.json(liq, { status: 200 });
   }),
 
   // PDF download (returns 501 — not implemented)
@@ -137,11 +141,11 @@ export const debtHandlers = [
 
   // Sign certificado
   http.put("http://localhost:3000/api/v1/debt/certificados/:id/sign", ({ params }) => {
-    const idx = certifidadosDeuda.findIndex((c) => c.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Certificado not found");
-    certifidadosDeuda[idx]!.is_executive_title = true;
-    certifidadosDeuda[idx]!.signed_at = new Date().toISOString();
-    certifidadosDeuda[idx]!.status = "EJECUTADO";
-    return HttpResponse.json(certifidadosDeuda[idx], { status: 200 });
+    const cert = certifidadosDeuda.find((c) => c.id === params.id);
+    if (!cert) return error(404, "NOT_FOUND", "Certificado not found");
+    cert.is_executive_title = true;
+    cert.signed_at = new Date().toISOString();
+    cert.status = "EJECUTADO";
+    return HttpResponse.json(cert, { status: 200 });
   }),
 ];

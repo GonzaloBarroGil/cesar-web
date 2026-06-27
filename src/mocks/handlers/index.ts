@@ -1,11 +1,11 @@
 import type { HttpHandler } from "msw";
 import { authHandlers } from "./auth";
 import { consorcioHandlers } from "./consorcios";
-import { expensesHandlers } from "./expenses";
-import { invoicesHandlers } from "./invoices";
 import { debtHandlers } from "./debt";
-import { paymentsHandlers } from "./payments";
+import { expensesHandlers } from "./expenses";
 import { incomesOutputsHandlers } from "./incomes-outputs";
+import { invoicesHandlers } from "./invoices";
+import { paymentsHandlers } from "./payments";
 
 export const handlers: HttpHandler[] = [
   ...authHandlers,

@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { AuthContext } from "../AuthContext";
 import type { AuthState } from "../AuthContext";
 
@@ -18,11 +18,7 @@ function MockAuthProvider({ children, authState }: WrapperProps) {
     ...authState,
   };
 
-  return (
-    <AuthContext.Provider value={defaultState}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={defaultState}>{children}</AuthContext.Provider>;
 }
 
 export { MockAuthProvider };

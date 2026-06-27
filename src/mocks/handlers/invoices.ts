@@ -1,5 +1,12 @@
 import { http, HttpResponse } from "msw";
-import { TORRE_NORTE_ID, TORRE_NORTE_CUIT, invoices, notasCredito, notasDebito, recibos } from "../fixtures/data";
+import {
+  TORRE_NORTE_CUIT,
+  TORRE_NORTE_ID,
+  invoices,
+  notasCredito,
+  notasDebito,
+  recibos,
+} from "../fixtures/data";
 import type { InvoiceData, NotaCreditoData, NotaDebitoData, ReciboData } from "../fixtures/data";
 
 function error(status: number, code: string, message: string) {
@@ -116,75 +123,81 @@ export const invoicesHandlers = [
 
   // Annul invoice
   http.put("http://localhost:3000/api/v1/invoices/:id/anular", ({ params }) => {
-    const idx = invoices.findIndex((i) => i.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Invoice not found");
-    invoices[idx]!.status = "ANULADA";
-    invoices[idx]!.tombstone = true;
-    return HttpResponse.json(invoices[idx], { status: 200 });
+    const inv = invoices.find((i) => i.id === params.id);
+    if (!inv) return error(404, "NOT_FOUND", "Invoice not found");
+    inv.status = "ANULADA";
+    inv.tombstone = true;
+    return HttpResponse.json(inv, { status: 200 });
   }),
 
   // Create Nota Crédito
-  http.post("http://localhost:3000/api/v1/invoices/:id/nota-credito", async ({ params, request }) => {
-    const factura = invoices.find((i) => i.id === params.id);
-    if (!factura) return error(404, "NOT_FOUND", "Invoice not found");
-    const body = (await request.json()) as Partial<NotaCreditoData>;
-    const nc: NotaCreditoData = {
-      id: crypto.randomUUID(),
-      consorcio_id: factura.consorcio_id,
-      factura_id: factura.id,
-      punto_venta: factura.punto_venta,
-      numero_comprobante: notasCredito.length + 1,
-      cae: String(Math.floor(10000000000000 + Math.random() * 90000000000000)),
-      cae_expiry: new Date(Date.now() + 10 * 86400000).toISOString(),
-      emision_date: body.emision_date || new Date().toISOString().slice(0, 10),
-      motivo: body.motivo || "",
-      amount: body.amount || { amount: "0.00", currency: "ARS" },
-      status: "ACTIVE",
-      hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
-      created_at: new Date().toISOString(),
-    };
-    notasCredito.push(nc);
-    return HttpResponse.json(nc, { status: 201 });
-  }),
+  http.post(
+    "http://localhost:3000/api/v1/invoices/:id/nota-credito",
+    async ({ params, request }) => {
+      const factura = invoices.find((i) => i.id === params.id);
+      if (!factura) return error(404, "NOT_FOUND", "Invoice not found");
+      const body = (await request.json()) as Partial<NotaCreditoData>;
+      const nc: NotaCreditoData = {
+        id: crypto.randomUUID(),
+        consorcio_id: factura.consorcio_id,
+        factura_id: factura.id,
+        punto_venta: factura.punto_venta,
+        numero_comprobante: notasCredito.length + 1,
+        cae: String(Math.floor(10000000000000 + Math.random() * 90000000000000)),
+        cae_expiry: new Date(Date.now() + 10 * 86400000).toISOString(),
+        emision_date: body.emision_date || new Date().toISOString().slice(0, 10),
+        motivo: body.motivo || "",
+        amount: body.amount || { amount: "0.00", currency: "ARS" },
+        status: "ACTIVE",
+        hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
+        created_at: new Date().toISOString(),
+      };
+      notasCredito.push(nc);
+      return HttpResponse.json(nc, { status: 201 });
+    },
+  ),
 
   // Annul NC
   http.put("http://localhost:3000/api/v1/invoices/nota-credito/:id/anular", ({ params }) => {
-    const idx = notasCredito.findIndex((n) => n.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Nota de Crédito not found");
-    notasCredito[idx]!.status = "ANULADA";
-    return HttpResponse.json(notasCredito[idx], { status: 200 });
+    const nc = notasCredito.find((n) => n.id === params.id);
+    if (!nc) return error(404, "NOT_FOUND", "Nota de Crédito not found");
+    nc.status = "ANULADA";
+    return HttpResponse.json(nc, { status: 200 });
   }),
 
   // Create Nota Débito
-  http.post("http://localhost:3000/api/v1/invoices/:id/nota-debito", async ({ params, request }) => {
-    const factura = invoices.find((i) => i.id === params.id);
-    if (!factura) return error(404, "NOT_FOUND", "Invoice not found");
-    const body = (await request.json()) as Partial<NotaDebitoData>;
-    const nd: NotaDebitoData = {
-      id: crypto.randomUUID(),
-      consorcio_id: factura.consorcio_id,
-      factura_id: factura.id,
-      punto_venta: factura.punto_venta,
-      numero_comprobante: notasDebito.length + 1,
-      cae: String(Math.floor(10000000000000 + Math.random() * 90000000000000)),
-      cae_expiry: new Date(Date.now() + 10 * 86400000).toISOString(),
-      emision_date: body.emision_date || new Date().toISOString().slice(0, 10),
-      motivo: body.motivo || "",
-      amount: body.amount || { amount: "0.00", currency: "ARS" },
-      status: "ACTIVE",
-      hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
-      created_at: new Date().toISOString(),
-    };
-    notasDebito.push(nd);
-    return HttpResponse.json(nd, { status: 201 });
-  }),
+  http.post(
+    "http://localhost:3000/api/v1/invoices/:id/nota-debito",
+    async ({ params, request }) => {
+      const factura = invoices.find((i) => i.id === params.id);
+      if (!factura) return error(404, "NOT_FOUND", "Invoice not found");
+      const body = (await request.json()) as Partial<NotaDebitoData>;
+      const nd: NotaDebitoData = {
+        id: crypto.randomUUID(),
+        consorcio_id: factura.consorcio_id,
+        factura_id: factura.id,
+        punto_venta: factura.punto_venta,
+        numero_comprobante: notasDebito.length + 1,
+        cae: String(Math.floor(10000000000000 + Math.random() * 90000000000000)),
+        cae_expiry: new Date(Date.now() + 10 * 86400000).toISOString(),
+        emision_date: body.emision_date || new Date().toISOString().slice(0, 10),
+        motivo: body.motivo || "",
+        amount: body.amount || { amount: "0.00", currency: "ARS" },
+        status: "ACTIVE",
+        hash: crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64),
+        created_at: new Date().toISOString(),
+      };
+      notasDebito.push(nd);
+      return HttpResponse.json(nd, { status: 201 });
+    },
+  ),
 
   // Annul ND
   http.put("http://localhost:3000/api/v1/invoices/nota-debito/:id/anular", ({ params }) => {
-    const idx = notasDebito.findIndex((n) => n.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Nota de Débito not found");
-    notasDebito[idx]!.status = "ANULADA";
-    return HttpResponse.json(notasDebito[idx], { status: 200 });
+    const nd = notasDebito.find((n) => n.id === params.id);
+    if (!nd) return error(404, "NOT_FOUND", "Nota de Débito not found");
+    nd.status = "ANULADA";
+    return HttpResponse.json(nd, { status: 200 });
   }),
 
   // Create Recibo
@@ -217,9 +230,9 @@ export const invoicesHandlers = [
 
   // Annul Recibo
   http.put("http://localhost:3000/api/v1/recibos/:id/anular", ({ params }) => {
-    const idx = recibos.findIndex((r) => r.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Recibo not found");
-    recibos[idx]!.status = "ANULADA";
-    return HttpResponse.json(recibos[idx], { status: 200 });
+    const rec = recibos.find((r) => r.id === params.id);
+    if (!rec) return error(404, "NOT_FOUND", "Recibo not found");
+    rec.status = "ANULADA";
+    return HttpResponse.json(rec, { status: 200 });
   }),
 ];

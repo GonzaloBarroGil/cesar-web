@@ -6,7 +6,10 @@ export const moneySchema = z.object({
 });
 
 export const cuitSchema = z.object({
-  value: z.string().regex(/^\d{11}$/, "CUIT debe tener exactamente 11 dígitos").describe("11-digit Argentine tax identifier with checksum"),
+  value: z
+    .string()
+    .regex(/^\d{11}$/, "CUIT debe tener exactamente 11 dígitos")
+    .describe("11-digit Argentine tax identifier with checksum"),
 });
 
 export const percentageSchema = z.object({
@@ -14,10 +17,15 @@ export const percentageSchema = z.object({
 });
 
 export const yyyymmSchema = z.object({
-  code: z.string().regex(/^(20[0-9]{2}|209[0-9])(0[1-9]|1[0-2])$/, "Formato YYYYMM requerido").describe("Six-digit year-month code"),
+  code: z
+    .string()
+    .regex(/^(20[0-9]{2}|209[0-9])(0[1-9]|1[0-2])$/, "Formato YYYYMM requerido")
+    .describe("Six-digit year-month code"),
 });
 
-export const ivaConditionSchema = z.enum(["RI", "EXENTO", "MONOTRIBUTISTA", "CF"]).describe("AFIP IVA condition");
+export const ivaConditionSchema = z
+  .enum(["RI", "EXENTO", "MONOTRIBUTISTA", "CF"])
+  .describe("AFIP IVA condition");
 
 export const errorResponseSchema = z.object({
   error: z.object({
@@ -30,7 +38,11 @@ export const errorResponseSchema = z.object({
 export const timestampSchema = z.string().datetime().describe("ISO 8601 UTC timestamp");
 export const dateSchema = z.string().date().describe("ISO 8601 date");
 export const uuidSchema = z.string().uuid().describe("UUID v7 identifier");
-export const hashSchema = z.string().length(64).regex(/^[a-fA-F0-9]{64}$/).describe("SHA-256 hex digest");
+export const hashSchema = z
+  .string()
+  .length(64)
+  .regex(/^[a-fA-F0-9]{64}$/)
+  .describe("SHA-256 hex digest");
 
 export const createConsorcioRequestSchema = z.object({
   cuit: cuitSchema.shape.value,

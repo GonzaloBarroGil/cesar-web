@@ -1,11 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Auth BDD Scenarios", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });
 
-  test("[@happy-path] Login with valid ADMIN credentials redirects to dashboard", async ({ page }) => {
+  test("[@happy-path] Login with valid ADMIN credentials redirects to dashboard", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.fill("input[name=username]", "admin");
     await page.fill("input[name=password]", "admin123");
@@ -14,7 +16,9 @@ test.describe("Auth BDD Scenarios", () => {
     await expect(page).not.toHaveURL(/\/login/);
   });
 
-  test("[@happy-path][@role-guard] Login with valid ACCOUNTANT credentials redirects to invoices", async ({ page }) => {
+  test("[@happy-path][@role-guard] Login with valid ACCOUNTANT credentials redirects to invoices", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.fill("input[name=username]", "contador");
     await page.fill("input[name=password]", "contador123");
@@ -33,7 +37,9 @@ test.describe("Auth BDD Scenarios", () => {
     await expect(page.locator("button[type=submit]")).toBeEnabled();
   });
 
-  test("[@error-state][@offline] Login with network failure shows toast and retry", async ({ page }) => {
+  test("[@error-state][@offline] Login with network failure shows toast and retry", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.fill("input[name=username]", "admin");
     await page.fill("input[name=password]", "admin123");
@@ -55,7 +61,10 @@ test.describe("Auth BDD Scenarios", () => {
 
   test("[@error-state] Session restore with expired token redirects to login", async ({ page }) => {
     await page.evaluate(() => {
-      sessionStorage.setItem("cesar_token", "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjEwMDAwMDAwMDB9.expired");
+      sessionStorage.setItem(
+        "cesar_token",
+        "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjEwMDAwMDAwMDB9.expired",
+      );
     });
     await page.goto("/");
     await expect(page).toHaveURL(/\/login/);
@@ -72,7 +81,9 @@ test.describe("Auth BDD Scenarios", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("[@error-state] Expired token mid-session redirects to login with toast", async ({ page }) => {
+  test("[@error-state] Expired token mid-session redirects to login with toast", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.fill("input[name=username]", "admin");
     await page.fill("input[name=password]", "admin123");
@@ -80,7 +91,10 @@ test.describe("Auth BDD Scenarios", () => {
     await page.waitForTimeout(500);
 
     await page.evaluate(() => {
-      sessionStorage.setItem("cesar_token", "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjEwMDAwMDAwMDB9.expired");
+      sessionStorage.setItem(
+        "cesar_token",
+        "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjEwMDAwMDAwMDB9.expired",
+      );
     });
     await page.goto("/consorcios");
     await expect(page).toHaveURL(/\/login/);
@@ -98,7 +112,9 @@ test.describe("Auth BDD Scenarios", () => {
     await expect(page.getByText("Facturación — Próximamente")).toBeVisible();
   });
 
-  test("[@role-guard] Unauthenticated user accessing protected route redirects to login", async ({ page }) => {
+  test("[@role-guard] Unauthenticated user accessing protected route redirects to login", async ({
+    page,
+  }) => {
     await page.evaluate(() => sessionStorage.clear());
     await page.goto("/expenses");
     await expect(page).toHaveURL(/\/login/);

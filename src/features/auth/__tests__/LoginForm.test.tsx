@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MockAuthProvider } from "./mocks";
-import { LoginForm } from "../LoginForm";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LoginForm } from "../LoginForm";
+import { MockAuthProvider } from "./mocks";
 
 const mockNavigate = vi.fn();
 
@@ -35,9 +35,9 @@ describe("LoginForm", () => {
   });
 
   it("shows error on invalid credentials", async () => {
-    const mockLogin = vi.fn().mockRejectedValue(
-      new Error("Credenciales inválidas. Verifique usuario y contraseña."),
-    );
+    const mockLogin = vi
+      .fn()
+      .mockRejectedValue(new Error("Credenciales inválidas. Verifique usuario y contraseña."));
 
     render(
       <MockAuthProvider authState={{ login: mockLogin }}>
@@ -98,9 +98,9 @@ describe("LoginForm", () => {
   });
 
   it("disables button and shows loading state during submission", async () => {
-    const mockLogin = vi.fn().mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100)),
-    );
+    const mockLogin = vi
+      .fn()
+      .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
     render(
       <MockAuthProvider authState={{ login: mockLogin }}>

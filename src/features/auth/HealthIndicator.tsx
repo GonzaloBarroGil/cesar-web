@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface HealthResponse {
   status: "ok" | "degraded";
@@ -11,13 +11,18 @@ interface HealthResponse {
 function HealthIndicator() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["health"],
-    queryFn: () =>
-      apiClient<HealthResponse>({ url: "/health", method: "GET" }),
+    queryFn: () => apiClient<HealthResponse>({ url: "/health", method: "GET" }),
     refetchInterval: 30_000,
     retry: false,
   });
 
-  const status = isError ? "offline" : isLoading ? "loading" : data?.status === "ok" ? "online" : "degraded";
+  const status = isError
+    ? "offline"
+    : isLoading
+      ? "loading"
+      : data?.status === "ok"
+        ? "online"
+        : "degraded";
 
   const colors = {
     online: "bg-green-500",
@@ -35,7 +40,7 @@ function HealthIndicator() {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-xs text-neutral-500`}
+      className={"inline-flex items-center gap-1.5 text-xs text-neutral-500"}
       title={labels[status]}
     >
       <span className={`h-2 w-2 rounded-full ${colors[status]}`} />

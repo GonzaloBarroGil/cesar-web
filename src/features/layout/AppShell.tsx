@@ -1,10 +1,10 @@
+import { HealthIndicator } from "@/features/auth/HealthIndicator";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { ConsorcioProvider } from "./ConsorcioContext";
-import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
 import { Breadcrumbs } from "./Breadcrumbs";
-import { HealthIndicator } from "@/features/auth/HealthIndicator";
+import { ConsorcioProvider } from "./ConsorcioContext";
+import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
 
 function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

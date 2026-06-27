@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { incomesOutputs, TORRE_NORTE_ID } from "../fixtures/data";
+import { TORRE_NORTE_ID, incomesOutputs } from "../fixtures/data";
 import type { IncomeOutputData } from "../fixtures/data";
 
 function error(status: number, code: string, message: string) {
@@ -53,47 +53,67 @@ export const incomesOutputsHandlers = [
 
   // Update entry
   http.put("http://localhost:3000/api/v1/incomes-outputs/:id", async ({ params, request }) => {
-    const idx = incomesOutputs.findIndex((io) => io.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Entry not found");
+    const existing = incomesOutputs.find((io) => io.id === params.id);
+    if (!existing) return error(404, "NOT_FOUND", "Entry not found");
     const body = (await request.json()) as Partial<IncomeOutputData>;
-    incomesOutputs[idx]!.version += 1;
-    incomesOutputs[idx]!.hash = crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64);
-    Object.assign(incomesOutputs[idx]!, body, { id: incomesOutputs[idx]!.id, version: incomesOutputs[idx]!.version, hash: incomesOutputs[idx]!.hash });
-    return HttpResponse.json(incomesOutputs[idx], { status: 200 });
+    existing.version += 1;
+    existing.hash = crypto.randomUUID().replace(/-/g, "").repeat(2).slice(0, 64);
+    Object.assign(existing, body, {
+      id: existing.id,
+      version: existing.version,
+      hash: existing.hash,
+    });
+    return HttpResponse.json(existing, { status: 200 });
   }),
 
   // Cancel entry
   http.put("http://localhost:3000/api/v1/incomes-outputs/:id/cancel", ({ params }) => {
-    const idx = incomesOutputs.findIndex((io) => io.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Entry not found");
-    incomesOutputs[idx]!.status = "CANCELLED";
-    incomesOutputs[idx]!.tombstone = true;
-    return HttpResponse.json(incomesOutputs[idx], { status: 200 });
+    const entry = incomesOutputs.find((io) => io.id === params.id);
+    if (!entry) return error(404, "NOT_FOUND", "Entry not found");
+    entry.status = "CANCELLED";
+    entry.tombstone = true;
+    return HttpResponse.json(entry, { status: 200 });
   }),
 
   // Single-period summary
   http.get("http://localhost:3000/api/v1/incomes-outputs/summary/:period", ({ params }) => {
-    const entries = incomesOutputs.filter((io) => io.period_code === params.period && !io.tombstone);
-    const totalIncome = entries.filter((e) => e.direction === "INCOME").reduce((s, e) => s + parseFloat(e.amount.amount || "0"), 0);
-    const totalOutput = entries.filter((e) => e.direction === "OUTPUT").reduce((s, e) => s + parseFloat(e.amount.amount || "0"), 0);
-    return HttpResponse.json({
-      total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
-      total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
-      net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-    }, { status: 200 });
+    const entries = incomesOutputs.filter(
+      (io) => io.period_code === params.period && !io.tombstone,
+    );
+    const totalIncome = entries
+      .filter((e) => e.direction === "INCOME")
+      .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
+    const totalOutput = entries
+      .filter((e) => e.direction === "OUTPUT")
+      .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
+    return HttpResponse.json(
+      {
+        total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
+        total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
+        net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
+      },
+      { status: 200 },
+    );
   }),
 
   // Cross-period summary
   http.get("http://localhost:3000/api/v1/incomes-outputs/summary", () => {
     const entries = incomesOutputs.filter((io) => !io.tombstone);
-    const totalIncome = entries.filter((e) => e.direction === "INCOME").reduce((s, e) => s + parseFloat(e.amount.amount || "0"), 0);
-    const totalOutput = entries.filter((e) => e.direction === "OUTPUT").reduce((s, e) => s + parseFloat(e.amount.amount || "0"), 0);
-    return HttpResponse.json({
-      total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
-      total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
-      net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-      opening_balance: { amount: "0.00", currency: "ARS" },
-      closing_balance: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-    }, { status: 200 });
+    const totalIncome = entries
+      .filter((e) => e.direction === "INCOME")
+      .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
+    const totalOutput = entries
+      .filter((e) => e.direction === "OUTPUT")
+      .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
+    return HttpResponse.json(
+      {
+        total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
+        total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
+        net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
+        opening_balance: { amount: "0.00", currency: "ARS" },
+        closing_balance: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
+      },
+      { status: 200 },
+    );
   }),
 ];

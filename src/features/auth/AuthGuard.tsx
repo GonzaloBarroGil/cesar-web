@@ -1,6 +1,6 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
 
 function AuthGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -15,7 +15,8 @@ function AuthGuard() {
   }
 
   if (!isAuthenticated) {
-    const redirect = location.pathname !== "/" ? `?redirect=${encodeURIComponent(location.pathname)}` : "";
+    const redirect =
+      location.pathname !== "/" ? `?redirect=${encodeURIComponent(location.pathname)}` : "";
     return <Navigate to={`/login${redirect}`} replace />;
   }
 
@@ -23,13 +24,13 @@ function AuthGuard() {
 }
 
 interface RoleGuardProps {
-  role: string | string[];
+  requiredRole: string | string[];
   children?: React.ReactNode;
 }
 
-function RoleGuard({ role, children }: RoleGuardProps) {
+function RoleGuard({ requiredRole, children }: RoleGuardProps) {
   const { user } = useAuth();
-  const allowedRoles = Array.isArray(role) ? role : [role];
+  const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
 
   if (!user) {
     return <Navigate to="/login" replace />;

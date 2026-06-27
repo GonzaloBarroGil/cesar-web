@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { PeriodPicker } from "../PeriodPicker";
 
 const samplePeriods = [
@@ -23,8 +23,16 @@ describe("PeriodPicker", () => {
 
   it("calls onChange with period code on selection", () => {
     let selected = "";
-    render(<PeriodPicker periods={samplePeriods} value="202606" onChange={(code) => { selected = code; }} />);
-    fireEvent.change(document.querySelector("select")!, { target: { value: "202605" } });
+    render(
+      <PeriodPicker
+        periods={samplePeriods}
+        value="202606"
+        onChange={(code) => {
+          selected = code;
+        }}
+      />,
+    );
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "202605" } });
     expect(selected).toBe("202605");
   });
 

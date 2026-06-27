@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { adminUser, accountantUser } from "../fixtures/data";
+import { accountantUser, adminUser } from "../fixtures/data";
 import type { UserData } from "../fixtures/data";
 
 const users: UserData[] = [adminUser, accountantUser];
@@ -34,7 +34,9 @@ export const authHandlers = [
       );
     }
     try {
-      const payload = JSON.parse(atob(auth.split(".")[1]!));
+      const tokenParts = auth.split(".");
+      if (!tokenParts[1]) throw new Error("Invalid token format");
+      const payload = JSON.parse(atob(tokenParts[1]));
       const user = users.find((u) => u.username === payload.username);
       if (!user) {
         return HttpResponse.json(

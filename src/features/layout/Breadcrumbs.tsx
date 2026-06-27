@@ -1,5 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   "": "Inicio",
@@ -36,7 +36,10 @@ function Breadcrumbs() {
   if (items.length <= 1) return null;
 
   return (
-    <nav className="flex items-center gap-1 px-4 py-2 text-sm text-neutral-500 border-b" aria-label="Migas de pan">
+    <nav
+      className="flex items-center gap-1 px-4 py-2 text-sm text-neutral-500 border-b"
+      aria-label="Migas de pan"
+    >
       {items.map((item, i) => (
         <span key={item.to} className="flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3 w-3" />}

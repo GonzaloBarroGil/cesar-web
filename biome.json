@@ -26,5 +26,8 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+  "files": {
+    "ignore": ["src/api/generated/**", "src/mocks/fixtures/**"]
   }
 }

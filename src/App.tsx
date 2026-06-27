@@ -1,8 +1,8 @@
-import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/AuthContext";
-import { LoginForm } from "@/features/auth/LoginForm";
 import { AuthGuard, RoleGuard } from "@/features/auth/AuthGuard";
+import { LoginForm } from "@/features/auth/LoginForm";
 import { AppShell } from "@/features/layout/AppShell";
+import { Route, Routes } from "react-router-dom";
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -21,7 +21,7 @@ function App() {
           <Route element={<AppShell />}>
             <Route index element={<Placeholder title="Panel de Control" />} />
             <Route path="invoices/*" element={<Placeholder title="Facturación" />} />
-            <Route element={<RoleGuard role="ADMIN" />}>
+            <Route element={<RoleGuard requiredRole="ADMIN" />}>
               <Route path="consorcios/*" element={<Placeholder title="Consorcios" />} />
               <Route path="expenses/*" element={<Placeholder title="Expensas" />} />
               <Route path="debt/*" element={<Placeholder title="Deuda" />} />

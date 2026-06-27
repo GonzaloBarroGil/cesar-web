@@ -421,13 +421,48 @@ export const providers: ProviderData[] = [
 ];
 
 export const concepts: ConceptData[] = [
-  { id: "550e8400-e29b-41d4-a716-446655440501", group: "A", name: "Mantenimiento de ascensores", description: "Servicio de mantenimiento mensual de ascensores" },
-  { id: "550e8400-e29b-41d4-a716-446655440502", group: "A", name: "Limpieza general", description: "Servicio de limpieza de espacios comunes" },
-  { id: "550e8400-e29b-41d4-a716-446655440503", group: "B", name: "Sueldo encargado", description: "Sueldo y cargas sociales del encargado" },
-  { id: "550e8400-e29b-41d4-a716-446655440504", group: "B", name: "Seguridad", description: "Servicio de vigilancia" },
-  { id: "550e8400-e29b-41d4-a716-446655440505", group: "C", name: "Fondo de reserva", description: "Aporte al fondo de reserva" },
-  { id: "550e8400-e29b-41d4-a716-446655440506", group: "A", name: "Jardinería", description: "Mantenimiento de espacios verdes" },
-  { id: "550e8400-e29b-41d4-a716-446655440507", group: "C", name: "Reparación extraordinaria", description: "Reparaciones no recurrentes" },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440501",
+    group: "A",
+    name: "Mantenimiento de ascensores",
+    description: "Servicio de mantenimiento mensual de ascensores",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440502",
+    group: "A",
+    name: "Limpieza general",
+    description: "Servicio de limpieza de espacios comunes",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440503",
+    group: "B",
+    name: "Sueldo encargado",
+    description: "Sueldo y cargas sociales del encargado",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440504",
+    group: "B",
+    name: "Seguridad",
+    description: "Servicio de vigilancia",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440505",
+    group: "C",
+    name: "Fondo de reserva",
+    description: "Aporte al fondo de reserva",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440506",
+    group: "A",
+    name: "Jardinería",
+    description: "Mantenimiento de espacios verdes",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440507",
+    group: "C",
+    name: "Reparación extraordinaria",
+    description: "Reparaciones no recurrentes",
+  },
 ];
 
 export const categories: CategoryData[] = [
@@ -567,7 +602,14 @@ export const invoices: InvoiceData[] = [
     receptor_nombre: "Consorcio Torre Norte",
     receptor_iva: "RI",
     items: [
-      { description: "Mantenimiento ascensores", cantidad: 1, precio_unitario: { amount: "45000.00", currency: "ARS" }, iva_rate: "21.0", subtotal: { amount: "45000.00", currency: "ARS" }, iva_amount: { amount: "9450.00", currency: "ARS" } },
+      {
+        description: "Mantenimiento ascensores",
+        cantidad: 1,
+        precio_unitario: { amount: "45000.00", currency: "ARS" },
+        iva_rate: "21.0",
+        subtotal: { amount: "45000.00", currency: "ARS" },
+        iva_amount: { amount: "9450.00", currency: "ARS" },
+      },
     ],
     neto: { amount: "45000.00", currency: "ARS" },
     iva: { amount: "9450.00", currency: "ARS" },
@@ -593,7 +635,14 @@ export const invoices: InvoiceData[] = [
     receptor_nombre: "Consorcio Torre Norte",
     receptor_iva: "RI",
     items: [
-      { description: "Limpieza general", cantidad: 1, precio_unitario: { amount: "35000.00", currency: "ARS" }, iva_rate: "21.0", subtotal: { amount: "35000.00", currency: "ARS" }, iva_amount: { amount: "7350.00", currency: "ARS" } },
+      {
+        description: "Limpieza general",
+        cantidad: 1,
+        precio_unitario: { amount: "35000.00", currency: "ARS" },
+        iva_rate: "21.0",
+        subtotal: { amount: "35000.00", currency: "ARS" },
+        iva_amount: { amount: "7350.00", currency: "ARS" },
+      },
     ],
     neto: { amount: "35000.00", currency: "ARS" },
     iva: { amount: "7350.00", currency: "ARS" },
@@ -622,8 +671,22 @@ export const liquidaciones: LiquidacionData[] = [
     unit_code: "1A",
     status: "DRAFT",
     allocations: [
-      { expense_id: expenses[0]!.id, description: "Mantenimiento ascensores", group: "A", total_cost: { amount: "45000.00", currency: "ARS" }, unit_share: { amount: "18000.00", currency: "ARS" }, percentage: "40.00" },
-      { expense_id: expenses[1]!.id, description: "Limpieza general", group: "A", total_cost: { amount: "35000.00", currency: "ARS" }, unit_share: { amount: "7954.55", currency: "ARS" }, percentage: "40.00" },
+      {
+        expense_id: expenses[0]!.id,
+        description: "Mantenimiento ascensores",
+        group: "A",
+        total_cost: { amount: "45000.00", currency: "ARS" },
+        unit_share: { amount: "18000.00", currency: "ARS" },
+        percentage: "40.00",
+      },
+      {
+        expense_id: expenses[1]!.id,
+        description: "Limpieza general",
+        group: "A",
+        total_cost: { amount: "35000.00", currency: "ARS" },
+        unit_share: { amount: "7954.55", currency: "ARS" },
+        percentage: "40.00",
+      },
     ],
     previous_balance: { amount: "0.00", currency: "ARS" },
     total_expenses: { amount: "25954.55", currency: "ARS" },
@@ -646,7 +709,14 @@ export const liquidaciones: LiquidacionData[] = [
     unit_code: "1A",
     status: "ISSUED",
     allocations: [
-      { expense_id: "EXP-MAY-001", description: "Mantenimiento ascensores Mayo", group: "A", total_cost: { amount: "45000.00", currency: "ARS" }, unit_share: { amount: "18000.00", currency: "ARS" }, percentage: "40.00" },
+      {
+        expense_id: "EXP-MAY-001",
+        description: "Mantenimiento ascensores Mayo",
+        group: "A",
+        total_cost: { amount: "45000.00", currency: "ARS" },
+        unit_share: { amount: "18000.00", currency: "ARS" },
+        percentage: "40.00",
+      },
     ],
     previous_balance: { amount: "0.00", currency: "ARS" },
     total_expenses: { amount: "18000.00", currency: "ARS" },

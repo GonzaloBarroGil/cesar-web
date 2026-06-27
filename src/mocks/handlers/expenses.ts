@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
-import { TORRE_NORTE_ID, expenses, concepts, categories, providers } from "../fixtures/data";
-import type { ExpenseData, ConceptData, CategoryData, ProviderData } from "../fixtures/data";
+import { TORRE_NORTE_ID, categories, concepts, expenses, providers } from "../fixtures/data";
+import type { CategoryData, ConceptData, ExpenseData, ProviderData } from "../fixtures/data";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -56,31 +56,31 @@ export const expensesHandlers = [
 
   // Tombstone
   http.put("http://localhost:3000/api/v1/expenses/:id/tombstone", ({ params }) => {
-    const idx = expenses.findIndex((e) => e.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Expense not found");
-    expenses[idx]!.tombstone = true;
-    return HttpResponse.json(expenses[idx], { status: 200 });
+    const exp = expenses.find((e) => e.id === params.id);
+    if (!exp) return error(404, "NOT_FOUND", "Expense not found");
+    exp.tombstone = true;
+    return HttpResponse.json(exp, { status: 200 });
   }),
 
   // Approve
   http.put("http://localhost:3000/api/v1/expenses/:id/approve", ({ params }) => {
-    const idx = expenses.findIndex((e) => e.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Expense not found");
-    if (expenses[idx]!.type !== "EXTRAORDINARIA") {
+    const exp = expenses.find((e) => e.id === params.id);
+    if (!exp) return error(404, "NOT_FOUND", "Expense not found");
+    if (exp.type !== "EXTRAORDINARIA") {
       return error(422, "VALIDATION_ERROR", "Only EXTRAORDINARIA expenses require approval");
     }
-    expenses[idx]!.status = "APPROVED";
-    expenses[idx]!.approved_at = new Date().toISOString();
-    return HttpResponse.json(expenses[idx], { status: 200 });
+    exp.status = "APPROVED";
+    exp.approved_at = new Date().toISOString();
+    return HttpResponse.json(exp, { status: 200 });
   }),
 
   // Reject
   http.put("http://localhost:3000/api/v1/expenses/:id/reject", ({ params }) => {
-    const idx = expenses.findIndex((e) => e.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Expense not found");
-    expenses[idx]!.status = "REJECTED";
-    expenses[idx]!.rejected_at = new Date().toISOString();
-    return HttpResponse.json(expenses[idx], { status: 200 });
+    const exp = expenses.find((e) => e.id === params.id);
+    if (!exp) return error(404, "NOT_FOUND", "Expense not found");
+    exp.status = "REJECTED";
+    exp.rejected_at = new Date().toISOString();
+    return HttpResponse.json(exp, { status: 200 });
   }),
 
   // Create concept
@@ -103,7 +103,10 @@ export const expensesHandlers = [
 
   // List concepts by group
   http.get("http://localhost:3000/api/v1/expenses/concepts/:group", ({ params }) => {
-    return HttpResponse.json(concepts.filter((c) => c.group === params.group), { status: 200 });
+    return HttpResponse.json(
+      concepts.filter((c) => c.group === params.group),
+      { status: 200 },
+    );
   }),
 
   // Create category
@@ -142,23 +145,28 @@ export const expensesHandlers = [
 
   // List providers
   http.get("http://localhost:3000/api/v1/expenses/providers", () => {
-    return HttpResponse.json(providers.filter((p) => !p.tombstone), { status: 200 });
+    return HttpResponse.json(
+      providers.filter((p) => !p.tombstone),
+      { status: 200 },
+    );
   }),
 
   // Update provider
   http.put("http://localhost:3000/api/v1/expenses/providers/:id", async ({ params, request }) => {
-    const idx = providers.findIndex((p) => p.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Provider not found");
+    const existing = providers.find((p) => p.id === params.id);
+    if (!existing) return error(404, "NOT_FOUND", "Provider not found");
     const body = (await request.json()) as Partial<ProviderData>;
-    providers[idx] = { ...providers[idx]!, ...body, id: providers[idx]!.id };
-    return HttpResponse.json(providers[idx], { status: 200 });
+    const updated = { ...existing, ...body, id: existing.id };
+    const index = providers.indexOf(existing);
+    providers[index] = updated;
+    return HttpResponse.json(updated, { status: 200 });
   }),
 
   // Tombstone provider
   http.put("http://localhost:3000/api/v1/expenses/providers/:id/tombstone", ({ params }) => {
-    const idx = providers.findIndex((p) => p.id === params.id);
-    if (idx === -1) return error(404, "NOT_FOUND", "Provider not found");
-    providers[idx]!.tombstone = true;
-    return HttpResponse.json(providers[idx], { status: 200 });
+    const prov = providers.find((p) => p.id === params.id);
+    if (!prov) return error(404, "NOT_FOUND", "Provider not found");
+    prov.tombstone = true;
+    return HttpResponse.json(prov, { status: 200 });
   }),
 ];
