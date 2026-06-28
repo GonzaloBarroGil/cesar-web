@@ -130,7 +130,7 @@ export const consorcioHandlers = [
   // List propietarios
   http.get("http://localhost:3000/api/v1/consorcios/:id/propietarios", ({ params }) => {
     const list = propietarios.filter((p) => p.consorcio_id === params.id);
-    return HttpResponse.json(list, { status: 200 });
+    return HttpResponse.json({ propietarios: list }, { status: 200 });
   }),
 
   // Find propietario by tax ID

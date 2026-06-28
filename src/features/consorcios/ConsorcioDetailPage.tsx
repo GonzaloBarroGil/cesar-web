@@ -12,16 +12,22 @@ import { propietarios as fixturePropietarios } from "@/mocks/fixtures/data";
 import { unidadesFuncionales as fixtureUfs } from "@/mocks/fixtures/data";
 import { periode202605, periode202606 } from "@/mocks/fixtures/data";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ConsorcioDetail } from "./ConsorcioDetail";
 import { PeriodTimeline } from "./PeriodTimeline";
 import { PropietarioList } from "./PropietarioList";
 import { UfTable } from "./UfTable";
 
+type Tab = "general" | "ufs" | "propietarios" | "periodos";
+
 function ConsorcioDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [tab, setTab] = useState<"general" | "ufs" | "propietarios" | "periodos">("general");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get("tab") as Tab | null;
+  const [tab, setTab] = useState<Tab>(
+    urlTab && ["general", "ufs", "propietarios", "periodos"].includes(urlTab) ? urlTab : "general",
+  );
 
   if (!id) return null;
 
@@ -70,6 +76,8 @@ function ConsorcioDetailPage() {
     updated_at: consorcio.updated_at ?? "",
   };
 
+  const periods = useMemo(() => [periode202606, periode202605], []);
+
   const tabs = [
     { key: "general" as const, label: "General" },
     { key: "ufs" as const, label: "Unidades Funcionales" },
@@ -94,7 +102,15 @@ function ConsorcioDetailPage() {
               <button
                 key={t.key}
                 type="button"
-                onClick={() => setTab(t.key)}
+                onClick={() => {
+                  setTab(t.key);
+                  if (t.key === "general") {
+                    searchParams.delete("tab");
+                  } else {
+                    searchParams.set("tab", t.key);
+                  }
+                  setSearchParams(searchParams, { replace: true });
+                }}
                 className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                   tab === t.key
                     ? "border-neutral-900 text-neutral-900"
@@ -126,7 +142,7 @@ function ConsorcioDetailPage() {
         )}
         {tab === "periodos" && (
           <PeriodTimeline
-            periods={[periode202606, periode202605]}
+            periods={periods}
             onOpen={(data) => openPeriod.mutate({ id, data: data as never })}
             onClose={(pid) => closePeriod.mutate({ id, periodId: pid })}
             onArchive={(pid) => archivePeriod.mutate({ id, periodId: pid })}

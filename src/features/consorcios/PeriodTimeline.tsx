@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PeriodData } from "@/mocks/fixtures/data";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface PeriodTimelineProps {
   periods: PeriodData[];
@@ -23,6 +23,7 @@ interface PeriodTimelineProps {
 }
 
 function PeriodTimeline({ periods, onOpen, onClose, onArchive, isMutating }: PeriodTimelineProps) {
+  const [localPeriods, setLocalPeriods] = useState<PeriodData[]>(periods);
   const [showOpenForm, setShowOpenForm] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: "close" | "archive";
@@ -33,12 +34,44 @@ function PeriodTimeline({ periods, onOpen, onClose, onArchive, isMutating }: Per
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  useEffect(() => {
+    setLocalPeriods(periods);
+  }, [periods]);
+
   const handleOpen = () => {
+    const newPeriod: PeriodData = {
+      id: `period-${code}`,
+      consorcio_id: periods[0]?.consorcio_id ?? "",
+      code,
+      start_date: startDate,
+      end_date: endDate,
+      status: "OPEN",
+      created_at: new Date().toISOString(),
+      closed_at: null,
+      archived_at: null,
+    };
+    setLocalPeriods((prev) => [newPeriod, ...prev]);
     onOpen({ code, start_date: startDate, end_date: endDate });
     setShowOpenForm(false);
     setCode("");
     setStartDate("");
     setEndDate("");
+  };
+
+  const handleClose = (id: string) => {
+    setLocalPeriods((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "CLOSED" as const } : p)),
+    );
+    onClose(id);
+    setConfirmAction(null);
+  };
+
+  const handleArchive = (id: string) => {
+    setLocalPeriods((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "ARCHIVED" as const } : p)),
+    );
+    onArchive(id);
+    setConfirmAction(null);
   };
 
   const statusLabels: Record<string, string> = {
@@ -105,7 +138,7 @@ function PeriodTimeline({ periods, onOpen, onClose, onArchive, isMutating }: Per
         </div>
       )}
 
-      {periods.length === 0 ? (
+      {localPeriods.length === 0 ? (
         <div className="text-center py-8 rounded-lg border">
           <p className="text-neutral-500 mb-2">Abra el primer período fiscal</p>
           <Button onClick={() => setShowOpenForm(true)}>Abrir Período</Button>
@@ -129,7 +162,7 @@ function PeriodTimeline({ periods, onOpen, onClose, onArchive, isMutating }: Per
               </tr>
             </thead>
             <tbody>
-              {periods.map((p) => (
+              {localPeriods.map((p) => (
                 <tr key={p.id} className="border-b hover:bg-neutral-50">
                   <td className="px-4 py-3 text-sm font-medium">{p.code}</td>
                   <td className="px-4 py-3 text-sm text-neutral-600 hidden sm:table-cell">
@@ -192,9 +225,8 @@ function PeriodTimeline({ periods, onOpen, onClose, onArchive, isMutating }: Per
               onClick={() => {
                 const action = confirmAction;
                 if (!action) return;
-                if (action.type === "close") onClose(action.period.id);
-                else if (action.type === "archive") onArchive(action.period.id);
-                setConfirmAction(null);
+                if (action.type === "close") handleClose(action.period.id);
+                else if (action.type === "archive") handleArchive(action.period.id);
               }}
             >
               Confirmar

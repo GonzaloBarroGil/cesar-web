@@ -44,7 +44,7 @@ function PropietarioList({ propietarios, isLoading, consorcioId }: PropietarioLi
             }}
             className="max-w-xs"
           />
-          <Button variant="outline" size="sm" onClick={handleSearch}>
+          <Button variant="outline" size="sm" onClick={handleSearch} aria-label="Buscar">
             <Search className="h-4 w-4" />
           </Button>
         </div>

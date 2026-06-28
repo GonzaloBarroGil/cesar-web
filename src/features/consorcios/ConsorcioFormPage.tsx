@@ -60,7 +60,8 @@ function ConsorcioFormPage() {
         {
           onSuccess: (result) => navigate(`/consorcios/${(result as { id: string }).id}`),
           onError: (err: unknown) => {
-            const msg = (err as { error?: { message?: string } })?.error?.message;
+            const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
+            const msg = axiosErr?.response?.data?.error?.message;
             setServerError(msg ?? "Error al crear el consorcio.");
           },
         },

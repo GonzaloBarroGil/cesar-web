@@ -2,6 +2,7 @@ interface IvaConditionSelectProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  id?: string;
 }
 
 const ivaConditions = [
@@ -11,9 +12,10 @@ const ivaConditions = [
   { value: "CF", label: "CF — Consumidor Final" },
 ];
 
-function IvaConditionSelect({ value, onChange, className }: IvaConditionSelectProps) {
+function IvaConditionSelect({ value, onChange, className, id }: IvaConditionSelectProps) {
   return (
     <select
+      id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={`h-9 rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 ${className ?? ""}`}

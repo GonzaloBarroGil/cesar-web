@@ -123,6 +123,7 @@ function ConsorcioForm({ initialData, onSubmit, isSubmitting, error }: Consorcio
       <div className="space-y-1.5">
         <Label htmlFor="iva_condition">Condición IVA</Label>
         <IvaConditionSelect
+          id="iva_condition"
           value={form.iva_condition}
           onChange={(v) => handleChange("iva_condition", v)}
         />
