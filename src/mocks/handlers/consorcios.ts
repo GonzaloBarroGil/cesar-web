@@ -6,6 +6,12 @@ import type {
   PropietarioData,
   UnidadFuncionalData,
 } from "../fixtures/data";
+import {
+  toConsorcioResponse,
+  toPeriodResponse,
+  toPropietarioListResponse,
+  toPropietarioResponse,
+} from "./consorcioTransform";
 
 const consorcios: ConsorcioData[] = [consorcioTorreNorte];
 const periodes: PeriodData[] = [periode202606, periode202605];
@@ -31,7 +37,7 @@ export const consorcioHandlers = [
   // List all consorcios
   http.get("http://localhost:3000/api/v1/consorcios", ({ request }) => {
     if (!requireAdmin(request)) return error(401, "UNAUTHORIZED", "Authentication required");
-    return HttpResponse.json(consorcios, { status: 200 });
+    return HttpResponse.json(consorcios.map(toConsorcioResponse), { status: 200 });
   }),
 
   // Create consorcio
@@ -57,14 +63,14 @@ export const consorcioHandlers = [
       updated_at: new Date().toISOString(),
     };
     consorcios.push(newC);
-    return HttpResponse.json(newC, { status: 201 });
+    return HttpResponse.json(toConsorcioResponse(newC), { status: 201 });
   }),
 
   // Get consorcio by ID
   http.get("http://localhost:3000/api/v1/consorcios/:id", ({ params }) => {
     const consorcio = consorcios.find((c) => c.id === params.id);
     if (!consorcio) return error(404, "NOT_FOUND", "Consorcio not found");
-    return HttpResponse.json(consorcio, { status: 200 });
+    return HttpResponse.json(toConsorcioResponse(consorcio), { status: 200 });
   }),
 
   // Update consorcio
@@ -76,7 +82,7 @@ export const consorcioHandlers = [
     const updated = { ...existing, ...body, updated_at: new Date().toISOString(), id: existing.id };
     const index = consorcios.indexOf(existing);
     consorcios[index] = updated;
-    return HttpResponse.json(updated, { status: 200 });
+    return HttpResponse.json(toConsorcioResponse(updated), { status: 200 });
   }),
 
   // Configure UFs
@@ -123,21 +129,21 @@ export const consorcioHandlers = [
         is_owner: body.is_owner ?? true,
       };
       propietarios.push(newP);
-      return HttpResponse.json(newP, { status: 201 });
+      return HttpResponse.json(toPropietarioResponse(newP), { status: 201 });
     },
   ),
 
   // List propietarios
   http.get("http://localhost:3000/api/v1/consorcios/:id/propietarios", ({ params }) => {
     const list = propietarios.filter((p) => p.consorcio_id === params.id);
-    return HttpResponse.json({ propietarios: list }, { status: 200 });
+    return HttpResponse.json(toPropietarioListResponse(list), { status: 200 });
   }),
 
   // Find propietario by tax ID
   http.get("http://localhost:3000/api/v1/consorcios/:id/propietarios/:taxId", ({ params }) => {
     const p = propietarios.find((p) => p.consorcio_id === params.id && p.tax_id === params.taxId);
     if (!p) return error(404, "NOT_FOUND", "Propietario not found");
-    return HttpResponse.json(p, { status: 200 });
+    return HttpResponse.json(toPropietarioResponse(p), { status: 200 });
   }),
 
   // Open period
@@ -159,7 +165,7 @@ export const consorcioHandlers = [
       archived_at: null,
     };
     periodes.push(newPeriod);
-    return HttpResponse.json(newPeriod, { status: 201 });
+    return HttpResponse.json(toPeriodResponse(newPeriod), { status: 201 });
   }),
 
   // Close period
@@ -171,7 +177,7 @@ export const consorcioHandlers = [
       if (!p) return error(404, "NOT_FOUND", "Period not found");
       p.status = "CLOSED";
       p.closed_at = new Date().toISOString();
-      return HttpResponse.json(p, { status: 200 });
+      return HttpResponse.json(toPeriodResponse(p), { status: 200 });
     },
   ),
 
@@ -184,7 +190,7 @@ export const consorcioHandlers = [
       if (!p) return error(404, "NOT_FOUND", "Period not found");
       p.status = "ARCHIVED";
       p.archived_at = new Date().toISOString();
-      return HttpResponse.json(p, { status: 200 });
+      return HttpResponse.json(toPeriodResponse(p), { status: 200 });
     },
   ),
 ];

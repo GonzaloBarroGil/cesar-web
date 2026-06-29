@@ -23,6 +23,15 @@ type Tab = "general" | "ufs" | "propietarios" | "periodos";
 
 function ConsorcioDetailPage() {
   const { id } = useParams<{ id: string }>();
+
+  const consorcioQuery = useGetConsorcio(id ?? "", { query: { enabled: !!id } });
+  const propListQuery = useListPropietarios(id ?? "", { query: { enabled: !!id } });
+
+  const configureUfs = useConfigureUfs();
+  const openPeriod = useOpenPeriod();
+  const closePeriod = useClosePeriod();
+  const archivePeriod = useArchivePeriod();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get("tab") as Tab | null;
   const [tab, setTab] = useState<Tab>(
@@ -31,13 +40,8 @@ function ConsorcioDetailPage() {
 
   if (!id) return null;
 
-  const { data: consorcio, isLoading, isError } = useGetConsorcio(id);
-  const { data: propList } = useListPropietarios(id);
-
-  const configureUfs = useConfigureUfs();
-  const openPeriod = useOpenPeriod();
-  const closePeriod = useClosePeriod();
-  const archivePeriod = useArchivePeriod();
+  const { data: consorcio, isLoading, isError } = consorcioQuery;
+  const { data: propList } = propListQuery;
 
   if (isLoading) {
     return (
@@ -62,15 +66,15 @@ function ConsorcioDetailPage() {
     );
   }
 
+  const extra = consorcio as Record<string, string>;
   const consorcioData = {
     id: String(consorcio.id ?? id),
     cuit: String(consorcio.cuit ?? ""),
     razon_social: consorcio.razon_social ?? "",
-    nombre_fantasia:
-      (consorcio as Record<string, string>).nombre_fantasia ?? consorcio.razon_social ?? "",
+    nombre_fantasia: extra.nombre_fantasia ?? extra.razon_social ?? "",
     matricula_caba: consorcio.admin_matricula ?? "",
     domicilio: consorcio.domicilio ?? "",
-    iva_condition: "RI",
+    iva_condition: extra.iva_condition ?? "RI",
     status: consorcio.status ?? "ACTIVE",
     created_at: consorcio.created_at ?? "",
     updated_at: consorcio.updated_at ?? "",
