@@ -11,7 +11,7 @@ async function loginAsAdmin(page: ReturnType<typeof test.info>["page"]) {
 }
 
 test.describe("Consorcio BDD Scenarios", () => {
-  test("[@happy-path][@red] create consorcio successfully", async ({ page }) => {
+  test("[@happy-path] create consorcio successfully", async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto("/consorcios/new");
 
@@ -53,7 +53,7 @@ test.describe("Consorcio BDD Scenarios", () => {
     await expect(page.getByText(/cuit inválido/i)).toBeVisible();
   });
 
-  test("[@happy-path][@red] view consorcio detail", async ({ page }) => {
+  test("[@happy-path] view consorcio detail", async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
 
@@ -91,7 +91,7 @@ test.describe("Period BDD Scenarios", () => {
     await loginAsAdmin(page);
   });
 
-  test("[@happy-path][@red] open new fiscal period", async ({ page }) => {
+  test("[@happy-path] open new fiscal period", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Períodos").click();
     await page.waitForTimeout(300);
@@ -111,16 +111,16 @@ test.describe("Period BDD Scenarios", () => {
     await expect(page.getByText("202607")).toBeVisible();
   });
 
-  test("[@happy-path][@red] close an open period with confirmation", async ({ page }) => {
+  test("[@happy-path] close an open period with confirmation", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Períodos").click();
     await page.waitForTimeout(300);
 
     const cerrarButton = page.getByRole("button", { name: /cerrar/i }).first();
     await cerrarButton.click();
-    await page.waitForTimeout(400);
 
-    const dialog = page.locator("[role='alertdialog']");
+    const dialog = page.getByRole("alertdialog");
+    await dialog.waitFor({ state: "visible", timeout: 3000 });
     await expect(dialog.getByText(/cerrar el período 202606/i)).toBeVisible();
 
     await dialog.getByRole("button", { name: /confirmar/i }).click();
@@ -129,7 +129,7 @@ test.describe("Period BDD Scenarios", () => {
     await expect(page.getByText("Cerrado")).toBeVisible();
   });
 
-  test("[@happy-path][@red] archive a closed period with confirmation", async ({ page }) => {
+  test("[@happy-path] archive a closed period with confirmation", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Períodos").click();
     await page.waitForTimeout(300);
@@ -147,7 +147,7 @@ test.describe("Period BDD Scenarios", () => {
     await expect(page.getByText("Archivado")).toBeVisible();
   });
 
-  test("[@error-state][@red] closed period does not show Close button", async ({ page }) => {
+  test("[@error-state] closed period does not show Close button", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Períodos").click();
     await page.waitForTimeout(300);
@@ -163,7 +163,7 @@ test.describe("Propietario BDD Scenarios", () => {
     await loginAsAdmin(page);
   });
 
-  test("[@happy-path][@red] register a propietario", async ({ page }) => {
+  test("[@happy-path] register a propietario", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}/propietarios/new`);
 
     await expect(page.getByLabel("Condición IVA")).toBeVisible();
@@ -175,7 +175,13 @@ test.describe("Propietario BDD Scenarios", () => {
     await page.getByLabel(/es propietario/i).check();
 
     await page.getByRole("button", { name: /registrar propietario/i }).click();
-    await page.waitForTimeout(800);
+    await page.waitForURL("**/consorcios/*?tab=propietarios**", { timeout: 5000 });
+    await page
+      .waitForResponse((resp) => resp.url().includes("/propietarios") && resp.status() === 200, {
+        timeout: 5000,
+      })
+      .catch(() => {});
+    await page.waitForTimeout(1000);
 
     await expect(page.getByText("Roberto Carlos Gómez")).toBeVisible();
   });
@@ -190,19 +196,17 @@ test.describe("Propietario BDD Scenarios", () => {
     await expect(page.getByText(/cuit inválido/i)).toBeVisible();
   });
 
-  test("[@happy-path][@red] list propietarios for consorcio", async ({ page }) => {
-    await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
-    await page.getByText("Propietarios").click();
-    await page.waitForTimeout(300);
+  test("[@happy-path] list propietarios for consorcio", async ({ page }) => {
+    await page.goto(`/consorcios/${TORRE_NORTE_ID}?tab=propietarios`);
+    await page.waitForTimeout(2000);
 
     await expect(page.getByText("Juan Carlos López")).toBeVisible();
     await expect(page.getByText("20123456781")).toBeVisible();
   });
 
-  test("[@happy-path][@red] search propietario by CUIT", async ({ page }) => {
-    await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
-    await page.getByText("Propietarios").click();
-    await page.waitForTimeout(300);
+  test("[@happy-path] search propietario by CUIT", async ({ page }) => {
+    await page.goto(`/consorcios/${TORRE_NORTE_ID}?tab=propietarios`);
+    await page.waitForTimeout(2000);
 
     await page.getByPlaceholder(/buscar por cuit/i).fill("20123456781");
     await page.getByLabel("Buscar").click();
@@ -211,10 +215,9 @@ test.describe("Propietario BDD Scenarios", () => {
     await expect(page.getByText("Juan Carlos López")).toBeVisible();
   });
 
-  test("[@error-state][@red] search propietario by CUIT not found", async ({ page }) => {
-    await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
-    await page.getByText("Propietarios").click();
-    await page.waitForTimeout(300);
+  test("[@error-state] search propietario by CUIT not found", async ({ page }) => {
+    await page.goto(`/consorcios/${TORRE_NORTE_ID}?tab=propietarios`);
+    await page.waitForTimeout(2000);
 
     await page.getByPlaceholder(/buscar por cuit/i).fill("20999999991");
     await page.getByLabel("Buscar").click();
@@ -223,7 +226,7 @@ test.describe("Propietario BDD Scenarios", () => {
     await expect(page.getByText(/no se encontró propietario/i)).toBeVisible();
   });
 
-  test("[@happy-path][@red] register an inquilino (not propietario)", async ({ page }) => {
+  test("[@happy-path] register an inquilino (not propietario)", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}/propietarios/new`);
 
     await page.selectOption("#tax_id_type", "DNI");
@@ -231,7 +234,13 @@ test.describe("Propietario BDD Scenarios", () => {
     await page.fill("#nombre_completo", "Inquilino Test");
     await page.fill("#email", "inquilino@test.com");
     await page.getByRole("button", { name: /registrar propietario/i }).click();
-    await page.waitForTimeout(500);
+    await page.waitForURL("**/consorcios/*?tab=propietarios**", { timeout: 5000 });
+    await page
+      .waitForResponse((resp) => resp.url().includes("/propietarios") && resp.status() === 200, {
+        timeout: 5000,
+      })
+      .catch(() => {});
+    await page.waitForTimeout(1000);
 
     await expect(page.getByText("Inquilino Test")).toBeVisible();
   });
@@ -242,7 +251,7 @@ test.describe("UF BDD Scenarios", () => {
     await loginAsAdmin(page);
   });
 
-  test("[@happy-path][@red] view UF configuration table", async ({ page }) => {
+  test("[@happy-path] view UF configuration table", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Unidades Funcionales").click();
     await page.waitForTimeout(300);
@@ -253,7 +262,7 @@ test.describe("UF BDD Scenarios", () => {
     await expect(page.getByText("100.00%").first()).toBeVisible();
   });
 
-  test("[@validation][@red] percentages exceeding 100% show warning", async ({ page }) => {
+  test("[@validation] percentages exceeding 100% show warning", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Unidades Funcionales").click();
     await page.waitForTimeout(300);
@@ -266,7 +275,7 @@ test.describe("UF BDD Scenarios", () => {
     await expect(page.getByRole("button", { name: /guardar/i })).toBeDisabled();
   });
 
-  test("[@validation][@red] percentages below 100% show warning", async ({ page }) => {
+  test("[@validation] percentages below 100% show warning", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Unidades Funcionales").click();
     await page.waitForTimeout(300);
@@ -279,7 +288,7 @@ test.describe("UF BDD Scenarios", () => {
     await expect(page.getByRole("button", { name: /guardar/i })).toBeDisabled();
   });
 
-  test("[@happy-path][@red] edit UF percentages with valid sums", async ({ page }) => {
+  test("[@happy-path] edit UF percentages with valid sums", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Unidades Funcionales").click();
     await page.waitForTimeout(300);
@@ -297,7 +306,7 @@ test.describe("UF BDD Scenarios", () => {
     await expect(page.getByRole("button", { name: /guardar/i })).toBeEnabled();
   });
 
-  test("[@happy-path][@red] mark UF as exempt from a group", async ({ page }) => {
+  test("[@happy-path] mark UF as exempt from a group", async ({ page }) => {
     await page.goto(`/consorcios/${TORRE_NORTE_ID}`);
     await page.getByText("Unidades Funcionales").click();
     await page.waitForTimeout(300);

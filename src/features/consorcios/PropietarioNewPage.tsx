@@ -1,5 +1,6 @@
 import { useRegisterPropietario } from "@/api/generated/consorcio/consorcio";
 import { unidadesFuncionales } from "@/mocks/fixtures/data";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -8,6 +9,7 @@ import { PropietarioForm } from "./PropietarioForm";
 function PropietarioNewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const registerPropietario = useRegisterPropietario();
 
   if (!id) return null;
@@ -39,7 +41,12 @@ function PropietarioNewPage() {
         } as never,
       },
       {
-        onSuccess: () => navigate(`/consorcios/${id}?tab=propietarios`),
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: [`/consorcios/${id}/propietarios`],
+          });
+          navigate(`/consorcios/${id}?tab=propietarios`);
+        },
       },
     );
   };

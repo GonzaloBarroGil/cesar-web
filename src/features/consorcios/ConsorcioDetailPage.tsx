@@ -38,6 +38,8 @@ function ConsorcioDetailPage() {
     urlTab && ["general", "ufs", "propietarios", "periodos"].includes(urlTab) ? urlTab : "general",
   );
 
+  const periods = useMemo(() => [periode202606, periode202605], []);
+
   if (!id) return null;
 
   const { data: consorcio, isLoading, isError } = consorcioQuery;
@@ -80,8 +82,6 @@ function ConsorcioDetailPage() {
     updated_at: consorcio.updated_at ?? "",
   };
 
-  const periods = useMemo(() => [periode202606, periode202605], []);
-
   const tabs = [
     { key: "general" as const, label: "General" },
     { key: "ufs" as const, label: "Unidades Funcionales" },
@@ -108,12 +108,13 @@ function ConsorcioDetailPage() {
                 type="button"
                 onClick={() => {
                   setTab(t.key);
+                  const next = new URLSearchParams(searchParams);
                   if (t.key === "general") {
-                    searchParams.delete("tab");
+                    next.delete("tab");
                   } else {
-                    searchParams.set("tab", t.key);
+                    next.set("tab", t.key);
                   }
-                  setSearchParams(searchParams, { replace: true });
+                  setSearchParams(next, { replace: true });
                 }}
                 className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                   tab === t.key

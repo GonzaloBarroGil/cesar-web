@@ -11,6 +11,14 @@ interface PropietarioListProps {
   consorcioId: string;
 }
 
+function taxIdStr(p: PropietarioData | Record<string, unknown>): string {
+  const taxId = p.tax_id;
+  if (typeof taxId === "object" && taxId !== null && "value" in taxId) {
+    return String(taxId.value);
+  }
+  return String(taxId ?? "");
+}
+
 function PropietarioList({ propietarios, isLoading, consorcioId }: PropietarioListProps) {
   const [search, setSearch] = useState("");
   const [searched, setSearched] = useState(false);
@@ -19,7 +27,8 @@ function PropietarioList({ propietarios, isLoading, consorcioId }: PropietarioLi
     setSearched(true);
   };
 
-  const filtered = searched ? propietarios.filter((p) => p.tax_id === search) : propietarios;
+  const anyList = propietarios as unknown as Record<string, unknown>[];
+  const filtered = searched ? anyList.filter((p) => taxIdStr(p) === search) : anyList;
 
   if (isLoading) {
     return (
@@ -93,19 +102,19 @@ function PropietarioList({ propietarios, isLoading, consorcioId }: PropietarioLi
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-b hover:bg-neutral-50">
-                  <td className="px-4 py-3 text-sm font-medium">{p.nombre_completo}</td>
+                <tr key={p.id as string} className="border-b hover:bg-neutral-50">
+                  <td className="px-4 py-3 text-sm font-medium">{p.nombre_completo as string}</td>
                   <td className="px-4 py-3 text-sm text-neutral-600">
-                    {p.tax_id_type} {p.tax_id}
+                    {p.tax_id_type as string} {taxIdStr(p)}
                   </td>
                   <td className="px-4 py-3 text-sm text-neutral-600 hidden sm:table-cell">
-                    {p.iva_condition}
+                    {p.iva_condition as string}
                   </td>
                   <td className="px-4 py-3 text-sm text-neutral-600 hidden sm:table-cell">
-                    {p.unidad_funcional_id}
+                    {p.unidad_funcional_id as string}
                   </td>
                   <td className="px-4 py-3 text-sm text-neutral-600 hidden sm:table-cell">
-                    {p.email}
+                    {p.email as string}
                   </td>
                   <td className="px-4 py-3">
                     <span
