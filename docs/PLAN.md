@@ -1,8 +1,9 @@
 # PLAN — CESAR Web Phase 1
 
-> **Status:** Approved (2026-06-25)
+> **Status:** Approved (2026-06-25). Updated 2026-07-13.
 > **Date:** 2026-06-25
-> **Phase:** PLAN. Next → TASKS.
+> **Phase:** TASKS — Wave 2 complete, Wave 3 pending.
+> **Progress:** 20/70 tasks complete. Waves 1-2 done, Waves 3-7 pending.
 > **Depends on:** All 9 SPECs approved (auth, layout, consorcios, expenses,
 >   invoices, debt, payments, incomes-outputs, dashboard)
 
@@ -322,69 +323,69 @@ acknowledgment before the agent proceeds to the next task.
 ◉ T1.8  contract-guardian   Contract verify: all 10 consorcio endpoints    → HITL ✓
 ── ◉ WAVE 2 COMPLETE ──→ W3
 
-◉ T2.1  feature-developer   Components: ExpenseList, ProviderList, etc.   → HITL ✓
-◉ T2.2  feature-developer   Hooks: all 9 mutations, DEC-001 approve/reject → HITL ✓
-◉ T2.3  feature-developer   Pages + routing: DEC-002 confirmation dialogs  → HITL ✓
-◉ T2.4  quality-engineer    BDD step defs: 30 scenarios                    → HITL ✓
-◉ T2.5  quality-engineer    Vitest tests: form, toggle, optimistic rollback → HITL ✓
-◉ T2.6  quality-engineer    E2E + a11y audit on expenses routes            → HITL ✓
-◉ T2.7  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T2.8  contract-guardian   Contract verify: all 15 expenses endpoints     → HITL ✓
+◉ T2.1  feature-developer   Components: ExpenseList, ProviderList, etc.   → pending
+◉ T2.2  feature-developer   Hooks: all 9 mutations, DEC-001 approve/reject → pending
+◉ T2.3  feature-developer   Pages + routing: DEC-002 confirmation dialogs  → pending
+◉ T2.4  quality-engineer    BDD step defs: 30 scenarios                    → pending
+◉ T2.5  quality-engineer    Vitest tests: form, toggle, optimistic rollback → pending
+◉ T2.6  quality-engineer    E2E + a11y audit on expenses routes            → pending
+◉ T2.7  feature-developer   Fix a11y findings                              → pending
+◉ T2.8  contract-guardian   Contract verify: all 15 expenses endpoints     → pending
 ── ∥ T2 and T3 gates are independent (features run in parallel)
 
-◉ T3.1  feature-developer   Components: FacturaAForm, NotaForm, etc.      → HITL ✓
-◉ T3.2  feature-developer   Hooks: 10 mutations, DEC-001 on 4 annuls       → HITL ✓
-◉ T3.3  feature-developer   Pages + routing: DEC-002 on all annuls         → HITL ✓
-◉ T3.4  quality-engineer    BDD step defs: 28 scenarios                    → HITL ✓
-◉ T3.5  quality-engineer    Vitest tests: IVA, CUIT, NC, role guard        → HITL ✓
-◉ T3.6  quality-engineer    E2E + a11y audit on invoices routes            → HITL ✓
-◉ T3.7  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T3.8  contract-guardian   Contract verify: all 12 invoices endpoints     → HITL ✓
-── ◉ WAVE 3 COMPLETE (T2.8 AND T3.8) ──→ W4
+◉ T3.1  feature-developer   Components: FacturaAForm, NotaForm, etc.      → pending
+◉ T3.2  feature-developer   Hooks: 10 mutations, DEC-001 on 4 annuls       → pending
+◉ T3.3  feature-developer   Pages + routing: DEC-002 on all annuls         → pending
+◉ T3.4  quality-engineer    BDD step defs: 28 scenarios                    → pending
+◉ T3.5  quality-engineer    Vitest tests: IVA, CUIT, NC, role guard        → pending
+◉ T3.6  quality-engineer    E2E + a11y audit on invoices routes            → pending
+◉ T3.7  feature-developer   Fix a11y findings                              → pending
+◉ T3.8  contract-guardian   Contract verify: all 12 invoices endpoints     → pending
+── ◉ WAVE 3 PENDING
 
-◉ T4.1  feature-developer   Components: LiquidacionDetail, CertDetail      → HITL ✓
-◉ T4.2  feature-developer   Hooks: 9 mutations, DEC-001 on issue/sign      → HITL ✓
-◉ T4.3  feature-developer   Pages + routing: PDF placeholder, DEC-002       → HITL ✓
-◉ T4.4  quality-engineer    BDD step defs: 22 scenarios                    → HITL ✓
-◉ T4.5  quality-engineer    Vitest tests: allocation, status, PDF button    → HITL ✓
-◉ T4.6  quality-engineer    E2E + a11y audit on debt routes                → HITL ✓
-◉ T4.7  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T4.8  contract-guardian   Contract verify: all 9 debt endpoints          → HITL ✓
-── ◉ WAVE 4 COMPLETE ──→ W5
+◉ T4.1  feature-developer   Components: LiquidacionDetail, CertDetail      → pending
+◉ T4.2  feature-developer   Hooks: 9 mutations, DEC-001 on issue/sign      → pending
+◉ T4.3  feature-developer   Pages + routing: PDF placeholder, DEC-002       → pending
+◉ T4.4  quality-engineer    BDD step defs: 22 scenarios                    → pending
+◉ T4.5  quality-engineer    Vitest tests: allocation, status, PDF button    → pending
+◉ T4.6  quality-engineer    E2E + a11y audit on debt routes                → pending
+◉ T4.7  feature-developer   Fix a11y findings                              → pending
+◉ T4.8  contract-guardian   Contract verify: all 9 debt endpoints          → pending
+── ◉ WAVE 4 PENDING
 
-◉ T5.1  feature-developer   Components: PaymentList, UnitBalanceCard       → HITL ✓
-◉ T5.2  feature-developer   Hooks: 6 mutations, DEC-001 on reverse         → HITL ✓
-◉ T5.3  feature-developer   Pages + routing: list + balances tab            → HITL ✓
-◉ T5.4  quality-engineer    BDD step defs: 18 scenarios                    → HITL ✓
-◉ T5.5  quality-engineer    Vitest tests: amount, voucher, reversal         → HITL ✓
-◉ T5.6  quality-engineer    E2E + a11y audit on payments routes            → HITL ✓
-◉ T5.7  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T5.8  contract-guardian   Contract verify: all 6 payments endpoints      → HITL ✓
+◉ T5.1  feature-developer   Components: PaymentList, UnitBalanceCard       → pending
+◉ T5.2  feature-developer   Hooks: 6 mutations, DEC-001 on reverse         → pending
+◉ T5.3  feature-developer   Pages + routing: list + balances tab            → pending
+◉ T5.4  quality-engineer    BDD step defs: 18 scenarios                    → pending
+◉ T5.5  quality-engineer    Vitest tests: amount, voucher, reversal         → pending
+◉ T5.6  quality-engineer    E2E + a11y audit on payments routes            → pending
+◉ T5.7  feature-developer   Fix a11y findings                              → pending
+◉ T5.8  contract-guardian   Contract verify: all 6 payments endpoints      → pending
 ── ∥ T5 and T6 gates are independent
 
-◉ T6.1  feature-developer   Components: EntryList, SummaryCards            → HITL ✓
-◉ T6.2  feature-developer   Hooks: 6 mutations, DEC-001 on cancel          → HITL ✓
-◉ T6.3  feature-developer   Pages + routing: summary tabs, net coloring     → HITL ✓
-◉ T6.4  quality-engineer    BDD step defs: 18 scenarios                    → HITL ✓
-◉ T6.5  quality-engineer    Vitest tests: direction, invoice_id, date       → HITL ✓
-◉ T6.6  quality-engineer    E2E + a11y audit on incomes routes             → HITL ✓
-◉ T6.7  feature-developer   Fix a11y findings                              → HITL ✓
-◉ T6.8  contract-guardian   Contract verify: all 7 IO paths                → HITL ✓
-── ◉ WAVE 5 COMPLETE (T5.8 AND T6.8) ──→ W6
+◉ T6.1  feature-developer   Components: EntryList, SummaryCards            → pending
+◉ T6.2  feature-developer   Hooks: 6 mutations, DEC-001 on cancel          → pending
+◉ T6.3  feature-developer   Pages + routing: summary tabs, net coloring     → pending
+◉ T6.4  quality-engineer    BDD step defs: 18 scenarios                    → pending
+◉ T6.5  quality-engineer    Vitest tests: direction, invoice_id, date       → pending
+◉ T6.6  quality-engineer    E2E + a11y audit on incomes routes             → pending
+◉ T6.7  feature-developer   Fix a11y findings                              → pending
+◉ T6.8  contract-guardian   Contract verify: all 7 IO paths                → pending
+── ◉ WAVE 5 PENDING
 
-◉ T7.1  feature-developer   Components: MetricCard, DashboardGrid          → HITL ✓
-◉ T7.2  feature-developer   Hooks: useQueries composition, metric derivation→ HITL ✓
-◉ T7.3  feature-developer   Page + routing: "/", drill-down, empty state   → HITL ✓
-◉ T7.4  quality-engineer    BDD step defs: 12 scenarios                    → HITL ✓
-◉ T7.5  quality-engineer    E2E + a11y audit on dashboard route            → HITL ✓
-◉ T7.6  contract-guardian   Contract verify: cross-feature imports          → HITL ✓
-── ◉ WAVE 6 COMPLETE ──→ W7
+◉ T7.1  feature-developer   Components: MetricCard, DashboardGrid          → pending
+◉ T7.2  feature-developer   Hooks: useQueries composition, metric derivation→ pending
+◉ T7.3  feature-developer   Page + routing: "/", drill-down, empty state   → pending
+◉ T7.4  quality-engineer    BDD step defs: 12 scenarios                    → pending
+◉ T7.5  quality-engineer    E2E + a11y audit on dashboard route            → pending
+◉ T7.6  contract-guardian   Contract verify: cross-feature imports          → pending
+── ◉ WAVE 6 PENDING
 
-◉ T8.1  quality-engineer    Full E2E regression: all 177 BDD scenarios     → HITL ✓
-◉ T8.2  quality-engineer    WCAG 2.1 AA audit across all routes            → HITL ✓
-◉ T8.3  contract-guardian   Contract fidelity: all 61 endpoints, tsc clean → HITL ✓
-◉ T8.4  constitution-arch   License compliance: AGPL-3.0 + MIT verified    → HITL ✓
-── ◉ WAVE 7 COMPLETE ──→ VALIDATION PHASE
+◉ T8.1  quality-engineer    Full E2E regression: all 177 BDD scenarios     → pending
+◉ T8.2  quality-engineer    WCAG 2.1 AA audit across all routes            → pending
+◉ T8.3  contract-guardian   Contract fidelity: all 61 endpoints, tsc clean → pending
+◉ T8.4  constitution-arch   License compliance: AGPL-3.0 + MIT verified    → pending
+── ◉ WAVE 7 PENDING
 ```
 
 ---
