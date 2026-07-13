@@ -20,6 +20,7 @@
 | **Deployment** | Static SPA served behind Nginx/CDN, connecting to CESAR backend |
 | **License** | AGPL-3.0-or-later (application) + MIT (shared libraries) |
 | **Methodology** | Contract-First Frontend Development (CFFD) — SDD variant for externally-owned API contracts |
+| **Ecosystem** | `../cesar-orchestration/CONSTITUTION.md` — ecosystem-level governance |
 
 ---
 
@@ -136,7 +137,7 @@ The frontend mirrors CESAR's bounded contexts, one feature directory per module:
 ### ADR-003: JWT in Memory + HttpOnly Cookie Fallback
 
 - **Decision**: JWT token held in React context during the session. On page refresh, `/api/v1/auth/me` validates the persisted token. If BFF layer is introduced later (post-Phase 2), migrate to HttpOnly session cookie managed by the BFF.
-- **Rationale**: Matches CESAR's JWT Bearer auth model (24-hour TTL, HS256). Memory storage avoids localStorage XSS exposure. The BFF migration path is kept open (see feasibility §9.3).
+- **Rationale**: Matches CESAR's JWT Bearer auth model (24-hour TTL, HS256). Memory storage avoids localStorage XSS exposure. The BFF migration path is kept open (see cesar-orchestration/cesar-web-feasibility.md §9.3).
 - **Owner**: feature-developer implements auth context; contract-guardian configures the axios JWT interceptor.
 
 ### ADR-004: Idempotency Keys Generated Client-Side
@@ -162,6 +163,12 @@ The frontend mirrors CESAR's bounded contexts, one feature directory per module:
 - **Decision**: Frontend operates with 4 agents: constitution-architect, contract-guardian, feature-developer, quality-engineer. Four backend-only agents are eliminated (domain-modeler, api-contract-designer, spec-author, legal-compliance-checker). Two are merged (bdd-scenario-writer + test-engineer → quality-engineer; rust-developer → feature-developer). One is new (contract-guardian, frontend-specific).
 - **Rationale**: Detailed in SDD methodology §3.2. The OpenAPI contract eliminates domain modeling and API contract authoring. Frontend specs are simpler (page flows, not legal invariants). Accessibility is elevated within quality-engineer rather than a separate auditor agent.
 - **Owner**: constitution-architect defines agent scopes.
+
+### ADR-008: Ecosystem Governance Integration
+
+- **Decision**: Defer cross-project coordination to the ecosystem constitution (`../cesar-orchestration/CONSTITUTION.md`). This constitution governs all project-internal matters (ADR-001 through ADR-007, unchanged).
+- **Rationale**: The ecosystem layer provides a neutral authority for cross-project sequencing and contract coordination. Previously §11 deferred cross-project disputes to cesar's constitution; the ecosystem constitution is a more appropriate and explicit authority. All internal architectural decisions (openapi pipeline, feature directories, auth model, idempotency, i18n, TanStack Query, agent roster) remain valid and unaffected.
+- **Date**: 2026-07-13
 
 ---
 
@@ -341,7 +348,7 @@ in the CFFD pipeline:
 
 | Agent | Role | Input | Output |
 |---|---|---|---|
-| **constitution-architect** | Defines governance + ADRs | Methodology doc + CESAR CONSTITUTION + feasibility analysis | `docs/CONSTITUTION.md`, `.opencode/opencode.json` rules, agent scope definitions |
+| **constitution-architect** | Defines governance + ADRs | Methodology doc + CESAR CONSTITUTION + analysis documents | `docs/CONSTITUTION.md`, `.opencode/opencode.json` rules, agent scope definitions |
 | **contract-guardian** | Manages OpenAPI → orval → MSW pipeline | `../cesar/api/openapi.yaml` | `src/api/generated/` (types + hooks), `src/mocks/handlers/` (MSW), `src/mocks/fixtures/`, Zod schemas |
 | **feature-developer** | Implements pages, components, hooks, forms | orval-generated types + BDD scenarios + UI specs | `src/features/<module>/`, `src/components/`, `src/hooks/`, `src/router/` |
 | **quality-engineer** | All test layers + BDD + accessibility | Feature code + OpenAPI contract + BDD scenarios | Vitest tests, Playwright E2E, `.feature` files, a11y audit reports |
@@ -436,11 +443,26 @@ component. Valid cross-feature imports must go through `components/shared/` or `
 ### Supersession
 
 This document supersedes:
-- `../feasibility/cesar-web-sdd-methodology.md` — incorporated as governance rules (§10) and agent roster (§9)
-- `../feasibility/cesar-web-feasibility.md` — incorporated as tech stack (§5) and ADRs (§4)
+- `../cesar-orchestration/cesar-web-sdd-methodology.md` — incorporated as governance rules (§10) and agent roster (§9)
+- `../cesar-orchestration/cesar-web-feasibility.md` — incorporated as tech stack (§5) and ADRs (§4)
 
-The feasibility documents remain as historical analysis artifacts. This
-constitution is the active governance document for all implementation phases.
+The analysis documents remain as historical analysis artifacts. This
+constitution is the active governance document for project-internal implementation phases.
+
+### Ecosystem Governance
+
+This project is part of the CESAR ecosystem. `../cesar-orchestration/CONSTITUTION.md` is the ecosystem-level governance authority.
+
+It supersedes this constitution on matters of:
+- **Sequencing**: which features are worked on and in what order relative to cesar
+- **Contract coordination**: how `api/openapi.yaml` is shared, validated, and kept compatible
+- **Cross-project quality gates**: integration readiness, BDD traceability, contract compatibility
+
+This constitution remains the authority for all project-internal matters (component structure, TypeScript configuration, test methodology, design patterns).
+
+### Amendment Cascade
+
+When the ecosystem constitution is amended, this constitution may require corresponding updates. Such amendments follow the normal amendment process via ADRs.
 
 ### Relationship to CESAR Backend CONSTITUTION
 
@@ -448,8 +470,8 @@ This constitution is a **derived** governance document. It inherits CESAR's
 P1-P8 principles where applicable, adapts them for the frontend, and adds
 frontend-specific principles (P9-P11). The CESAR `docs/CONSTITUTION.md`
 remains the authority for backend decisions. Where a decision affects both
-projects (e.g., OpenAPI spec ownership, auth model, licensing), this
-constitution defers to CESAR's constitution.
+projects (e.g., OpenAPI spec ownership, auth model, licensing), the
+ecosystem constitution (`../cesar-orchestration/CONSTITUTION.md`) is the authority.
 
 ---
 
