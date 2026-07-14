@@ -31,6 +31,7 @@ import type {
   ConsorcioResponse,
   CreateConsorcioRequest,
   ErrorResponse,
+  ListConsorciosParams,
   OpenPeriodRequest,
   PeriodResponse,
   PropietarioListResponse,
@@ -115,6 +116,100 @@ export const useCreateConsorcio = <TError = ErrorResponse,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Returns all consorcios with optional pagination.
+ * @summary List all consorcios
+ */
+export const listConsorcios = (
+    params?: ListConsorciosParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return apiClient<ConsorcioResponse[]>(
+      {url: `/consorcios`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getListConsorciosQueryKey = (params?: ListConsorciosParams,) => {
+    return [
+    `/consorcios`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getListConsorciosQueryOptions = <TData = Awaited<ReturnType<typeof listConsorcios>>, TError = ErrorResponse>(params?: ListConsorciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConsorciosQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConsorcios>>> = ({ signal }) => listConsorcios(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ListConsorciosQueryResult = NonNullable<Awaited<ReturnType<typeof listConsorcios>>>
+export type ListConsorciosQueryError = ErrorResponse
+
+
+export function useListConsorcios<TData = Awaited<ReturnType<typeof listConsorcios>>, TError = ErrorResponse>(
+ params: undefined |  ListConsorciosParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConsorcios>>,
+          TError,
+          Awaited<ReturnType<typeof listConsorcios>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListConsorcios<TData = Awaited<ReturnType<typeof listConsorcios>>, TError = ErrorResponse>(
+ params?: ListConsorciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConsorcios>>,
+          TError,
+          Awaited<ReturnType<typeof listConsorcios>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListConsorcios<TData = Awaited<ReturnType<typeof listConsorcios>>, TError = ErrorResponse>(
+ params?: ListConsorciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary List all consorcios
+ */
+
+export function useListConsorcios<TData = Awaited<ReturnType<typeof listConsorcios>>, TError = ErrorResponse>(
+ params?: ListConsorciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsorcios>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getListConsorciosQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Returns the full consorcio aggregate by its UUID.
  * @summary Retrieve a consorcio by ID
  */
