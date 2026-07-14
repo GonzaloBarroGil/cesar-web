@@ -1,6 +1,12 @@
 import { http, HttpResponse } from "msw";
 import { TORRE_NORTE_ID, certifidadosDeuda, liquidaciones } from "../fixtures/data";
 import type { CertificadoDeudaData, LiquidacionData } from "../fixtures/data";
+import {
+  toCertificadoListResponse,
+  toCertificadoResponse,
+  toLiquidacionListResponse,
+  toLiquidacionResponse,
+} from "./debtTransform";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -36,7 +42,7 @@ export const debtHandlers = [
       issued_at: null,
     };
     liquidaciones.push(liq);
-    return HttpResponse.json(liq, { status: 201 });
+    return HttpResponse.json(toLiquidacionResponse(liq), { status: 201 });
   }),
 
   // Batch generate
@@ -65,7 +71,7 @@ export const debtHandlers = [
       issued_at: null,
     });
     liquidaciones.push(...newLiqs);
-    return HttpResponse.json(newLiqs, { status: 201 });
+    return HttpResponse.json(toLiquidacionListResponse(newLiqs), { status: 201 });
   }),
 
   // List liquidaciones
@@ -76,14 +82,14 @@ export const debtHandlers = [
     let result = [...liquidaciones];
     if (consorcio) result = result.filter((l) => l.consorcio_id === consorcio);
     if (period) result = result.filter((l) => l.period_code === period);
-    return HttpResponse.json(result, { status: 200 });
+    return HttpResponse.json(toLiquidacionListResponse(result), { status: 200 });
   }),
 
   // Get liquidacion detail
   http.get("http://localhost:3000/api/v1/debt/liquidaciones/:id", ({ params }) => {
     const liq = liquidaciones.find((l) => l.id === params.id);
     if (!liq) return error(404, "NOT_FOUND", "Liquidacion not found");
-    return HttpResponse.json(liq, { status: 200 });
+    return HttpResponse.json(toLiquidacionResponse(liq), { status: 200 });
   }),
 
   // Issue liquidacion
@@ -92,7 +98,7 @@ export const debtHandlers = [
     if (!liq) return error(404, "NOT_FOUND", "Liquidacion not found");
     liq.status = "ISSUED";
     liq.issued_at = new Date().toISOString();
-    return HttpResponse.json(liq, { status: 200 });
+    return HttpResponse.json(toLiquidacionResponse(liq), { status: 200 });
   }),
 
   // PDF download (returns 501 — not implemented)
@@ -120,7 +126,7 @@ export const debtHandlers = [
       signed_at: null,
     };
     certifidadosDeuda.push(cert);
-    return HttpResponse.json(cert, { status: 201 });
+    return HttpResponse.json(toCertificadoResponse(cert), { status: 201 });
   }),
 
   // List certificados
@@ -129,14 +135,14 @@ export const debtHandlers = [
     const unitId = url.searchParams.get("unit_id");
     let result = [...certifidadosDeuda];
     if (unitId) result = result.filter((c) => c.unidad_funcional_id === unitId);
-    return HttpResponse.json(result, { status: 200 });
+    return HttpResponse.json(toCertificadoListResponse(result), { status: 200 });
   }),
 
   // Get certificado detail
   http.get("http://localhost:3000/api/v1/debt/certificados/:id", ({ params }) => {
     const cert = certifidadosDeuda.find((c) => c.id === params.id);
     if (!cert) return error(404, "NOT_FOUND", "Certificado not found");
-    return HttpResponse.json(cert, { status: 200 });
+    return HttpResponse.json(toCertificadoResponse(cert), { status: 200 });
   }),
 
   // Sign certificado
@@ -146,6 +152,6 @@ export const debtHandlers = [
     cert.is_executive_title = true;
     cert.signed_at = new Date().toISOString();
     cert.status = "EJECUTADO";
-    return HttpResponse.json(cert, { status: 200 });
+    return HttpResponse.json(toCertificadoResponse(cert), { status: 200 });
   }),
 ];

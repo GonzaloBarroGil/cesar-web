@@ -1,6 +1,11 @@
 import { http, HttpResponse } from "msw";
 import { TORRE_NORTE_ID, payments } from "../fixtures/data";
 import type { PaymentData } from "../fixtures/data";
+import {
+  toPaymentHistoryEntry,
+  toPaymentResponse,
+  toUnitBalanceResponse,
+} from "./paymentTransform";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -26,7 +31,7 @@ export const paymentsHandlers = [
       created_at: new Date().toISOString(),
     };
     payments.push(newP);
-    return HttpResponse.json(newP, { status: 201 });
+    return HttpResponse.json(toPaymentResponse(newP), { status: 201 });
   }),
 
   // List payments
@@ -37,14 +42,14 @@ export const paymentsHandlers = [
     let result = [...payments];
     if (consorcio) result = result.filter((p) => p.consorcio_id === consorcio);
     if (period) result = result.filter((p) => p.period_code === period);
-    return HttpResponse.json(result, { status: 200 });
+    return HttpResponse.json(result.map(toPaymentResponse), { status: 200 });
   }),
 
   // Get payment detail
   http.get("http://localhost:3000/api/v1/payments/:id", ({ params }) => {
     const p = payments.find((p) => p.id === params.id);
     if (!p) return error(404, "NOT_FOUND", "Payment not found");
-    return HttpResponse.json(p, { status: 200 });
+    return HttpResponse.json(toPaymentResponse(p), { status: 200 });
   }),
 
   // Reverse payment
@@ -68,7 +73,7 @@ export const paymentsHandlers = [
     };
     payment.status = "REVERSED";
     payments.push(reversal);
-    return HttpResponse.json(reversal, { status: 201 });
+    return HttpResponse.json(toPaymentResponse(reversal), { status: 201 });
   }),
 
   // Unit balance
@@ -77,14 +82,9 @@ export const paymentsHandlers = [
       (p) => p.unidad_funcional_id === params.unitId && p.status === "ACTIVE",
     );
     const total = unitPayments.reduce((s, p) => s + Number.parseFloat(p.amount.amount || "0"), 0);
-    return HttpResponse.json(
-      {
-        unit_id: params.unitId,
-        total_paid: { amount: total.toFixed(2), currency: "ARS" },
-        payment_count: unitPayments.length,
-      },
-      { status: 200 },
-    );
+    return HttpResponse.json(toUnitBalanceResponse(params.unitId as string, total), {
+      status: 200,
+    });
   }),
 
   // Payment history
@@ -92,6 +92,6 @@ export const paymentsHandlers = [
     const history = payments
       .filter((p) => p.unidad_funcional_id === params.unitId)
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return HttpResponse.json(history, { status: 200 });
+    return HttpResponse.json(history.map(toPaymentHistoryEntry), { status: 200 });
   }),
 ];

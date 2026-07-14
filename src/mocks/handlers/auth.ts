@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { accountantUser, adminUser } from "../fixtures/data";
 import type { UserData } from "../fixtures/data";
+import { toLoginResponse, toMeResponse } from "./authTransform";
 
 const users: UserData[] = [adminUser, accountantUser];
 
@@ -22,7 +23,7 @@ export const authHandlers = [
       );
     }
     const token = `eyJhbGciOiJIUzI1NiJ9.${btoa(JSON.stringify({ sub: user.id, username: user.username, role: user.role, consorcio_id: user.consorcio_id, exp: Math.floor(Date.now() / 1000) + 86400, iat: Math.floor(Date.now() / 1000), jti: crypto.randomUUID() }))}.fake_signature`;
-    return HttpResponse.json({ token, user }, { status: 200 });
+    return HttpResponse.json(toLoginResponse(user, token), { status: 200 });
   }),
 
   http.get("http://localhost:3000/api/v1/auth/me", ({ request }) => {
@@ -44,7 +45,7 @@ export const authHandlers = [
           { status: 401 },
         );
       }
-      return HttpResponse.json(user, { status: 200 });
+      return HttpResponse.json(toMeResponse(user), { status: 200 });
     } catch {
       return HttpResponse.json(
         { error: { code: "UNAUTHORIZED", message: "Invalid token" } },
@@ -55,7 +56,14 @@ export const authHandlers = [
 
   http.get("http://localhost:3000/api/v1/health", () => {
     return HttpResponse.json(
-      { status: "ok", postgres: "connected", redis: "connected", nats: "connected" },
+      {
+        status: "ok" as "ok" | "degraded" | "down",
+        dependencies: {
+          postgres: { status: "healthy" as "healthy" | "unhealthy" },
+          redis: { status: "healthy" as "healthy" | "unhealthy" },
+          nats: { status: "healthy" as "healthy" | "unhealthy" },
+        },
+      },
       { status: 200 },
     );
   }),

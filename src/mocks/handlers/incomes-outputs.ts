@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { TORRE_NORTE_ID, incomesOutputs } from "../fixtures/data";
 import type { IncomeOutputData } from "../fixtures/data";
+import { toFinancialSummary, toIncomeOutputResponse } from "./incomeOutputTransform";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -28,7 +29,7 @@ export const incomesOutputsHandlers = [
       created_at: new Date().toISOString(),
     };
     incomesOutputs.push(io);
-    return HttpResponse.json(io, { status: 201 });
+    return HttpResponse.json(toIncomeOutputResponse(io), { status: 201 });
   }),
 
   // List entries
@@ -41,14 +42,14 @@ export const incomesOutputsHandlers = [
     if (direction) result = result.filter((io) => io.direction === direction);
     if (from) result = result.filter((io) => io.date >= from);
     if (to) result = result.filter((io) => io.date <= to);
-    return HttpResponse.json(result, { status: 200 });
+    return HttpResponse.json(result.map(toIncomeOutputResponse), { status: 200 });
   }),
 
   // Get entry detail
   http.get("http://localhost:3000/api/v1/incomes-outputs/:id", ({ params }) => {
     const io = incomesOutputs.find((io) => io.id === params.id);
     if (!io) return error(404, "NOT_FOUND", "Entry not found");
-    return HttpResponse.json(io, { status: 200 });
+    return HttpResponse.json(toIncomeOutputResponse(io), { status: 200 });
   }),
 
   // Update entry
@@ -63,7 +64,7 @@ export const incomesOutputsHandlers = [
       version: existing.version,
       hash: existing.hash,
     });
-    return HttpResponse.json(existing, { status: 200 });
+    return HttpResponse.json(toIncomeOutputResponse(existing), { status: 200 });
   }),
 
   // Cancel entry
@@ -72,7 +73,7 @@ export const incomesOutputsHandlers = [
     if (!entry) return error(404, "NOT_FOUND", "Entry not found");
     entry.status = "CANCELLED";
     entry.tombstone = true;
-    return HttpResponse.json(entry, { status: 200 });
+    return HttpResponse.json(toIncomeOutputResponse(entry), { status: 200 });
   }),
 
   // Single-period summary
@@ -87,11 +88,10 @@ export const incomesOutputsHandlers = [
       .filter((e) => e.direction === "OUTPUT")
       .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
     return HttpResponse.json(
-      {
-        total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
-        total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
-        net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-      },
+      toFinancialSummary({
+        total_income: totalIncome,
+        total_output: totalOutput,
+      }),
       { status: 200 },
     );
   }),
@@ -106,13 +106,11 @@ export const incomesOutputsHandlers = [
       .filter((e) => e.direction === "OUTPUT")
       .reduce((s, e) => s + Number.parseFloat(e.amount.amount || "0"), 0);
     return HttpResponse.json(
-      {
-        total_income: { amount: totalIncome.toFixed(2), currency: "ARS" },
-        total_output: { amount: totalOutput.toFixed(2), currency: "ARS" },
-        net_flow: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-        opening_balance: { amount: "0.00", currency: "ARS" },
-        closing_balance: { amount: (totalIncome - totalOutput).toFixed(2), currency: "ARS" },
-      },
+      toFinancialSummary({
+        total_income: totalIncome,
+        total_output: totalOutput,
+        opening_balance: 0,
+      }),
       { status: 200 },
     );
   }),

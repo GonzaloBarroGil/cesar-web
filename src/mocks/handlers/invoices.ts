@@ -8,6 +8,12 @@ import {
   recibos,
 } from "../fixtures/data";
 import type { InvoiceData, NotaCreditoData, NotaDebitoData, ReciboData } from "../fixtures/data";
+import {
+  toInvoiceResponse,
+  toNotaCreditoResponse,
+  toNotaDebitoResponse,
+  toReciboResponse,
+} from "./invoiceTransform";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -42,7 +48,7 @@ export const invoicesHandlers = [
       created_at: new Date().toISOString(),
     };
     invoices.push(inv);
-    return HttpResponse.json(inv, { status: 201 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 201 });
   }),
 
   // Create Factura B
@@ -73,7 +79,7 @@ export const invoicesHandlers = [
       created_at: new Date().toISOString(),
     };
     invoices.push(inv);
-    return HttpResponse.json(inv, { status: 201 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 201 });
   }),
 
   // Create Factura C
@@ -104,21 +110,21 @@ export const invoicesHandlers = [
       created_at: new Date().toISOString(),
     };
     invoices.push(inv);
-    return HttpResponse.json(inv, { status: 201 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 201 });
   }),
 
   // Get invoice by ID
   http.get("http://localhost:3000/api/v1/invoices/:id", ({ params }) => {
     const inv = invoices.find((i) => i.id === params.id);
     if (!inv) return error(404, "NOT_FOUND", "Invoice not found");
-    return HttpResponse.json(inv, { status: 200 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 200 });
   }),
 
   // Get invoice by CAE
   http.get("http://localhost:3000/api/v1/invoices/cae/:cae", ({ params }) => {
     const inv = invoices.find((i) => i.cae === params.cae);
     if (!inv) return error(404, "NOT_FOUND", "Invoice not found");
-    return HttpResponse.json(inv, { status: 200 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 200 });
   }),
 
   // Annul invoice
@@ -127,7 +133,7 @@ export const invoicesHandlers = [
     if (!inv) return error(404, "NOT_FOUND", "Invoice not found");
     inv.status = "ANULADA";
     inv.tombstone = true;
-    return HttpResponse.json(inv, { status: 200 });
+    return HttpResponse.json(toInvoiceResponse(inv), { status: 200 });
   }),
 
   // Create Nota Crédito
@@ -153,7 +159,7 @@ export const invoicesHandlers = [
         created_at: new Date().toISOString(),
       };
       notasCredito.push(nc);
-      return HttpResponse.json(nc, { status: 201 });
+      return HttpResponse.json(toNotaCreditoResponse(nc), { status: 201 });
     },
   ),
 
@@ -162,7 +168,7 @@ export const invoicesHandlers = [
     const nc = notasCredito.find((n) => n.id === params.id);
     if (!nc) return error(404, "NOT_FOUND", "Nota de Crédito not found");
     nc.status = "ANULADA";
-    return HttpResponse.json(nc, { status: 200 });
+    return HttpResponse.json(toNotaCreditoResponse(nc), { status: 200 });
   }),
 
   // Create Nota Débito
@@ -188,7 +194,7 @@ export const invoicesHandlers = [
         created_at: new Date().toISOString(),
       };
       notasDebito.push(nd);
-      return HttpResponse.json(nd, { status: 201 });
+      return HttpResponse.json(toNotaDebitoResponse(nd), { status: 201 });
     },
   ),
 
@@ -197,7 +203,7 @@ export const invoicesHandlers = [
     const nd = notasDebito.find((n) => n.id === params.id);
     if (!nd) return error(404, "NOT_FOUND", "Nota de Débito not found");
     nd.status = "ANULADA";
-    return HttpResponse.json(nd, { status: 200 });
+    return HttpResponse.json(toNotaDebitoResponse(nd), { status: 200 });
   }),
 
   // Create Recibo
@@ -218,14 +224,17 @@ export const invoicesHandlers = [
       created_at: new Date().toISOString(),
     };
     recibos.push(rec);
-    return HttpResponse.json(rec, { status: 201 });
+    return HttpResponse.json(toReciboResponse(rec), { status: 201 });
   }),
 
   // Get Recibo
   http.get("http://localhost:3000/api/v1/recibos/:id", ({ params }) => {
     const rec = recibos.find((r) => r.id === params.id) || invoices.find((i) => i.id === params.id);
     if (!rec) return error(404, "NOT_FOUND", "Recibo not found");
-    return HttpResponse.json(rec, { status: 200 });
+    if ("tipo_comprobante" in rec) {
+      return HttpResponse.json(toInvoiceResponse(rec as InvoiceData), { status: 200 });
+    }
+    return HttpResponse.json(toReciboResponse(rec as ReciboData), { status: 200 });
   }),
 
   // Annul Recibo
@@ -233,6 +242,6 @@ export const invoicesHandlers = [
     const rec = recibos.find((r) => r.id === params.id);
     if (!rec) return error(404, "NOT_FOUND", "Recibo not found");
     rec.status = "ANULADA";
-    return HttpResponse.json(rec, { status: 200 });
+    return HttpResponse.json(toReciboResponse(rec), { status: 200 });
   }),
 ];

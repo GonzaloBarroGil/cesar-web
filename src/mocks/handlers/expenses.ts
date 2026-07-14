@@ -1,6 +1,12 @@
 import { http, HttpResponse } from "msw";
 import { TORRE_NORTE_ID, categories, concepts, expenses, providers } from "../fixtures/data";
 import type { CategoryData, ConceptData, ExpenseData, ProviderData } from "../fixtures/data";
+import {
+  toCategoryResponse,
+  toConceptResponse,
+  toExpenseResponse,
+  toProviderResponse,
+} from "./expenseTransform";
 
 function error(status: number, code: string, message: string) {
   return HttpResponse.json({ error: { code, message } }, { status });
@@ -33,7 +39,7 @@ export const expensesHandlers = [
       rejected_at: null,
     };
     expenses.push(newExpense);
-    return HttpResponse.json(newExpense, { status: 201 });
+    return HttpResponse.json(toExpenseResponse(newExpense), { status: 201 });
   }),
 
   // List expenses
@@ -44,14 +50,14 @@ export const expensesHandlers = [
     let result = [...expenses];
     if (consorcio_id) result = result.filter((e) => e.consorcio_id === consorcio_id);
     if (period) result = result.filter((e) => e.period_code === period);
-    return HttpResponse.json(result, { status: 200 });
+    return HttpResponse.json(result.map(toExpenseResponse), { status: 200 });
   }),
 
   // Version history
   http.get("http://localhost:3000/api/v1/expenses/:id/versions", ({ params }) => {
     const expense = expenses.find((e) => e.id === params.id);
     if (!expense) return error(404, "NOT_FOUND", "Expense not found");
-    return HttpResponse.json([expense], { status: 200 });
+    return HttpResponse.json([toExpenseResponse(expense)], { status: 200 });
   }),
 
   // Tombstone
@@ -59,7 +65,7 @@ export const expensesHandlers = [
     const exp = expenses.find((e) => e.id === params.id);
     if (!exp) return error(404, "NOT_FOUND", "Expense not found");
     exp.tombstone = true;
-    return HttpResponse.json(exp, { status: 200 });
+    return HttpResponse.json(toExpenseResponse(exp), { status: 200 });
   }),
 
   // Approve
@@ -71,7 +77,7 @@ export const expensesHandlers = [
     }
     exp.status = "APPROVED";
     exp.approved_at = new Date().toISOString();
-    return HttpResponse.json(exp, { status: 200 });
+    return HttpResponse.json(toExpenseResponse(exp), { status: 200 });
   }),
 
   // Reject
@@ -80,7 +86,7 @@ export const expensesHandlers = [
     if (!exp) return error(404, "NOT_FOUND", "Expense not found");
     exp.status = "REJECTED";
     exp.rejected_at = new Date().toISOString();
-    return HttpResponse.json(exp, { status: 200 });
+    return HttpResponse.json(toExpenseResponse(exp), { status: 200 });
   }),
 
   // Create concept
@@ -93,18 +99,18 @@ export const expensesHandlers = [
       description: body.description || "",
     };
     concepts.push(c);
-    return HttpResponse.json(c, { status: 201 });
+    return HttpResponse.json(toConceptResponse(c), { status: 201 });
   }),
 
   // List concepts
   http.get("http://localhost:3000/api/v1/expenses/concepts", () => {
-    return HttpResponse.json(concepts, { status: 200 });
+    return HttpResponse.json(concepts.map(toConceptResponse), { status: 200 });
   }),
 
   // List concepts by group
   http.get("http://localhost:3000/api/v1/expenses/concepts/:group", ({ params }) => {
     return HttpResponse.json(
-      concepts.filter((c) => c.group === params.group),
+      concepts.filter((c) => c.group === params.group).map(toConceptResponse),
       { status: 200 },
     );
   }),
@@ -118,12 +124,12 @@ export const expensesHandlers = [
       name: body.name || "",
     };
     categories.push(c);
-    return HttpResponse.json(c, { status: 201 });
+    return HttpResponse.json(toCategoryResponse(c), { status: 201 });
   }),
 
   // List categories
   http.get("http://localhost:3000/api/v1/expenses/categories", () => {
-    return HttpResponse.json(categories, { status: 200 });
+    return HttpResponse.json(categories.map(toCategoryResponse), { status: 200 });
   }),
 
   // Register provider
@@ -140,15 +146,14 @@ export const expensesHandlers = [
       tombstone: false,
     };
     providers.push(p);
-    return HttpResponse.json(p, { status: 201 });
+    return HttpResponse.json(toProviderResponse(p), { status: 201 });
   }),
 
   // List providers
   http.get("http://localhost:3000/api/v1/expenses/providers", () => {
-    return HttpResponse.json(
-      providers.filter((p) => !p.tombstone),
-      { status: 200 },
-    );
+    return HttpResponse.json(providers.filter((p) => !p.tombstone).map(toProviderResponse), {
+      status: 200,
+    });
   }),
 
   // Update provider
@@ -159,7 +164,7 @@ export const expensesHandlers = [
     const updated = { ...existing, ...body, id: existing.id };
     const index = providers.indexOf(existing);
     providers[index] = updated;
-    return HttpResponse.json(updated, { status: 200 });
+    return HttpResponse.json(toProviderResponse(updated), { status: 200 });
   }),
 
   // Tombstone provider
@@ -167,6 +172,6 @@ export const expensesHandlers = [
     const prov = providers.find((p) => p.id === params.id);
     if (!prov) return error(404, "NOT_FOUND", "Provider not found");
     prov.tombstone = true;
-    return HttpResponse.json(prov, { status: 200 });
+    return HttpResponse.json(toProviderResponse(prov), { status: 200 });
   }),
 ];
