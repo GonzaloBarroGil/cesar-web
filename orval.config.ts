@@ -3,7 +3,7 @@ import { defineConfig } from "orval";
 export default defineConfig({
   cesar: {
     input: {
-      target: "/tmp/cesar-openapi-fixed.yaml",
+      target: "api/openapi.yaml",
     },
     output: {
       mode: "tags-split",
