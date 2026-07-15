@@ -7,6 +7,15 @@ import {
   ConsorciosPage,
   PropietarioNewPage,
 } from "@/features/consorcios";
+import {
+  CategoryListPage,
+  ConceptListPage,
+  ExpenseCreatePage,
+  ExpenseDetailPage,
+  ExpensesPage,
+  ProviderFormPage,
+  ProviderListPage,
+} from "@/features/expenses";
 import { AppShell } from "@/features/layout/AppShell";
 import { Route, Routes } from "react-router-dom";
 
@@ -33,7 +42,14 @@ function App() {
               <Route path="consorcios/:id" element={<ConsorcioDetailPage />} />
               <Route path="consorcios/:id/edit" element={<ConsorcioFormPage />} />
               <Route path="consorcios/:id/propietarios/new" element={<PropietarioNewPage />} />
-              <Route path="expenses/*" element={<Placeholder title="Expensas" />} />
+              <Route path="expenses" element={<ExpensesPage />} />
+              <Route path="expenses/new" element={<ExpenseCreatePage />} />
+              <Route path="expenses/:id" element={<ExpenseDetailPage />} />
+              <Route path="expenses/concepts" element={<ConceptListPage />} />
+              <Route path="expenses/categories" element={<CategoryListPage />} />
+              <Route path="expenses/providers" element={<ProviderListPage />} />
+              <Route path="expenses/providers/new" element={<ProviderFormPage />} />
+              <Route path="expenses/providers/:id/edit" element={<ProviderFormPage />} />
               <Route path="debt/*" element={<Placeholder title="Deuda" />} />
               <Route path="payments/*" element={<Placeholder title="Pagos" />} />
               <Route path="incomes-outputs/*" element={<Placeholder title="Ingresos/Egresos" />} />
