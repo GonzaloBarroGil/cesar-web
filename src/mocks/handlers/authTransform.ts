@@ -7,6 +7,8 @@ function toLoginResponse(user: UserData, token: string) {
       id: user.id,
       username: user.username,
       role: user.role,
+      consorcio_id: user.consorcio_id,
+      nombre_completo: user.nombre_completo,
     },
   };
 }
@@ -17,6 +19,8 @@ function toMeResponse(user: UserData) {
       id: user.id,
       username: user.username,
       role: user.role,
+      consorcio_id: user.consorcio_id,
+      nombre_completo: user.nombre_completo,
     },
   };
 }
