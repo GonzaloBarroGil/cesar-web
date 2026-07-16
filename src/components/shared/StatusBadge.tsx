@@ -9,6 +9,8 @@ const statusMap: Record<string, { label: string; color: StatusColor; strikethrou
   REJECTED: { label: "Rechazado", color: "red" },
   DRAFT: { label: "Borrador", color: "blue" },
   ISSUED: { label: "Emitido", color: "purple" },
+  SETTLED: { label: "Liquidado", color: "green" },
+  VENCIDO: { label: "Vencido", color: "orange" },
   CANCELLED: { label: "Cancelado", color: "grey" },
   REVERSED: { label: "Revertido", color: "orange" },
   ANULADA: { label: "Anulado", color: "grey", strikethrough: true },

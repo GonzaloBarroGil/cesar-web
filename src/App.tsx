@@ -8,6 +8,12 @@ import {
   PropietarioNewPage,
 } from "@/features/consorcios";
 import {
+  CertificadoDetailPage,
+  CertificadoListPage,
+  DebtPage,
+  LiquidacionDetailPage,
+} from "@/features/debt";
+import {
   CategoryListPage,
   ConceptListPage,
   ExpenseCreatePage,
@@ -69,7 +75,10 @@ function App() {
               <Route path="expenses/providers" element={<ProviderListPage />} />
               <Route path="expenses/providers/new" element={<ProviderFormPage />} />
               <Route path="expenses/providers/:id/edit" element={<ProviderFormPage />} />
-              <Route path="debt/*" element={<Placeholder title="Deuda" />} />
+              <Route path="debt" element={<DebtPage />} />
+              <Route path="debt/certificados" element={<CertificadoListPage />} />
+              <Route path="debt/certificados/:id" element={<CertificadoDetailPage />} />
+              <Route path="debt/:id" element={<LiquidacionDetailPage />} />
               <Route path="payments/*" element={<Placeholder title="Pagos" />} />
               <Route path="incomes-outputs/*" element={<Placeholder title="Ingresos/Egresos" />} />
             </Route>
