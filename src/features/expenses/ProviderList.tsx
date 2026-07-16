@@ -105,6 +105,7 @@ function ProviderList({ providers, isLoading, error, onTombstone }: ProviderList
                       <Link
                         to={`/expenses/providers/${p.id}/edit`}
                         className="text-xs text-neutral-500 hover:text-neutral-700 p-1"
+                        aria-label={`Editar ${p.name}`}
                       >
                         <Edit className="h-3 w-3" />
                       </Link>
@@ -115,6 +116,7 @@ function ProviderList({ providers, isLoading, error, onTombstone }: ProviderList
                           type="button"
                           onClick={() => setTombstoneId(p.id)}
                           className="text-xs text-neutral-500 hover:text-red-600 p-1"
+                          aria-label={`Eliminar ${p.name}`}
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
