@@ -33,7 +33,7 @@ function CaeQrDisplay({ cae, caeVencimiento, qrCode }: CaeQrDisplayProps) {
         className="h-24 w-24 shrink-0 rounded-md border bg-neutral-50 flex items-center justify-center text-center"
         title={qrCode}
       >
-        <span className="text-[10px] text-neutral-400 px-2">QR ARCA (RG 4892/2020)</span>
+        <span className="text-[10px] text-neutral-500 px-2">QR ARCA (RG 4892/2020)</span>
       </div>
     </div>
   );
