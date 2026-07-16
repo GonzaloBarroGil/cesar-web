@@ -20,6 +20,14 @@ function error(status: number, code: string, message: string) {
 }
 
 export const invoicesHandlers = [
+  // List invoices (list endpoint not in OAS spec — client-side filtered)
+  http.get("http://localhost:3000/api/v1/invoices", () =>
+    HttpResponse.json(
+      invoices.map((i) => toInvoiceResponse(i).data),
+      { status: 200 },
+    ),
+  ),
+
   // Create Factura A
   http.post("http://localhost:3000/api/v1/invoices/factura-a", async ({ request }) => {
     const body = (await request.json()) as Partial<InvoiceData>;

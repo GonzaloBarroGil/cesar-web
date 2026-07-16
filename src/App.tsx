@@ -16,6 +16,17 @@ import {
   ProviderFormPage,
   ProviderListPage,
 } from "@/features/expenses";
+import {
+  FacturaACreatePage,
+  FacturaBCreatePage,
+  FacturaCCreatePage,
+  InvoiceDetailPage,
+  InvoicesPage,
+  NotaCreditoCreatePage,
+  NotaDebitoCreatePage,
+  ReciboCreatePage,
+  ReciboDetailPage,
+} from "@/features/invoices";
 import { AppShell } from "@/features/layout/AppShell";
 import { Route, Routes } from "react-router-dom";
 
@@ -35,7 +46,15 @@ function App() {
         <Route element={<AuthGuard />}>
           <Route element={<AppShell />}>
             <Route index element={<Placeholder title="Panel de Control" />} />
-            <Route path="invoices/*" element={<Placeholder title="Facturación" />} />
+            <Route path="invoices" element={<InvoicesPage />} />
+            <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+            <Route path="invoices/factura-a/new" element={<FacturaACreatePage />} />
+            <Route path="invoices/factura-b/new" element={<FacturaBCreatePage />} />
+            <Route path="invoices/factura-c/new" element={<FacturaCCreatePage />} />
+            <Route path="invoices/:id/nc/new" element={<NotaCreditoCreatePage />} />
+            <Route path="invoices/:id/nd/new" element={<NotaDebitoCreatePage />} />
+            <Route path="invoices/recibos/new" element={<ReciboCreatePage />} />
+            <Route path="invoices/recibos/:id" element={<ReciboDetailPage />} />
             <Route element={<RoleGuard requiredRole="ADMIN" />}>
               <Route path="consorcios" element={<ConsorciosPage />} />
               <Route path="consorcios/new" element={<ConsorcioFormPage />} />
