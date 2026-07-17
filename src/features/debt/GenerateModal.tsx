@@ -75,7 +75,7 @@ function GenerateModal({ open, onOpenChange, onGenerate, onBatchGenerate }: Gene
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Generar Liquidacion</h2>
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" size="sm" aria-label="Cerrar" onClick={() => onOpenChange(false)}>
             <X className="h-4 w-4" />
           </Button>
         </div>

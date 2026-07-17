@@ -73,6 +73,7 @@ function DebtPage() {
             className="w-40"
           />
           <select
+            aria-label="Filtrar por estado"
             value={status}
             onChange={(e) => updateParam("status", e.target.value)}
             className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm shadow-sm"

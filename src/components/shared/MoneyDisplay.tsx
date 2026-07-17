@@ -21,7 +21,7 @@ function MoneyDisplay({ amount, className, showColor = false }: MoneyDisplayProp
     <span
       className={cn(
         "tabular-nums",
-        showColor && value > 0 && "text-green-600",
+        showColor && value > 0 && "text-green-700",
         showColor && value < 0 && "text-red-600",
         className,
       )}

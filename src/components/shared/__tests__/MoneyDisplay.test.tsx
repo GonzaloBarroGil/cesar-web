@@ -22,7 +22,7 @@ describe("MoneyDisplay", () => {
     const { container } = render(
       <MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} showColor />,
     );
-    expect(container.firstChild).toHaveClass("text-green-600");
+    expect(container.firstChild).toHaveClass("text-green-700");
   });
 
   it("shows red for negative when showColor is true", () => {
@@ -34,7 +34,7 @@ describe("MoneyDisplay", () => {
 
   it("does not apply color class when showColor is false", () => {
     const { container } = render(<MoneyDisplay amount={{ amount: "100.00", currency: "ARS" }} />);
-    expect(container.firstChild).not.toHaveClass("text-green-600");
+    expect(container.firstChild).not.toHaveClass("text-green-700");
     expect(container.firstChild).not.toHaveClass("text-red-600");
   });
 
