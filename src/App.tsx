@@ -22,6 +22,7 @@ import {
   ProviderFormPage,
   ProviderListPage,
 } from "@/features/expenses";
+import { EntryDetailPage, EntryListPage, SummaryPage } from "@/features/incomes-outputs";
 import {
   FacturaACreatePage,
   FacturaBCreatePage,
@@ -34,6 +35,7 @@ import {
   ReciboDetailPage,
 } from "@/features/invoices";
 import { AppShell } from "@/features/layout/AppShell";
+import { PaymentDetailPage, PaymentListPage } from "@/features/payments";
 import { Route, Routes } from "react-router-dom";
 
 function Placeholder({ title }: { title: string }) {
@@ -79,8 +81,11 @@ function App() {
               <Route path="debt/certificados" element={<CertificadoListPage />} />
               <Route path="debt/certificados/:id" element={<CertificadoDetailPage />} />
               <Route path="debt/:id" element={<LiquidacionDetailPage />} />
-              <Route path="payments/*" element={<Placeholder title="Pagos" />} />
-              <Route path="incomes-outputs/*" element={<Placeholder title="Ingresos/Egresos" />} />
+              <Route path="payments" element={<PaymentListPage />} />
+              <Route path="payments/:id" element={<PaymentDetailPage />} />
+              <Route path="incomes-outputs" element={<EntryListPage />} />
+              <Route path="incomes-outputs/summary" element={<SummaryPage />} />
+              <Route path="incomes-outputs/:id" element={<EntryDetailPage />} />
             </Route>
           </Route>
         </Route>
