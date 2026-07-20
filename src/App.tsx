@@ -7,6 +7,7 @@ import {
   ConsorciosPage,
   PropietarioNewPage,
 } from "@/features/consorcios";
+import { DashboardPage } from "@/features/dashboard";
 import {
   CertificadoDetailPage,
   CertificadoListPage,
@@ -38,14 +39,6 @@ import { AppShell } from "@/features/layout/AppShell";
 import { PaymentDetailPage, PaymentListPage } from "@/features/payments";
 import { Route, Routes } from "react-router-dom";
 
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div className="flex items-center justify-center h-64 text-neutral-500 text-lg">
-      {title} — Próximamente
-    </div>
-  );
-}
-
 function App() {
   return (
     <AuthProvider>
@@ -53,7 +46,7 @@ function App() {
         <Route path="/login" element={<LoginForm />} />
         <Route element={<AuthGuard />}>
           <Route element={<AppShell />}>
-            <Route index element={<Placeholder title="Panel de Control" />} />
+            <Route index element={<DashboardPage />} />
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="invoices/:id" element={<InvoiceDetailPage />} />
             <Route path="invoices/factura-a/new" element={<FacturaACreatePage />} />
