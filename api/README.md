@@ -1,25 +1,46 @@
-# OpenAPI Spec (gitignored)
+# OpenAPI Spec (pinned version)
 
-The file `api/openapi.yaml` is a copy of CESAR's OpenAPI 3.1 contract (`cesar/api/openapi.yaml`). It is **gitignored** because the backend owns the spec — cesar-web is a consumer, not the source of truth.
+The file `api/openapi.yaml` is a pinned copy of CESAR's OpenAPI 3.1 contract
+(`cesar/api/openapi.yaml`). It is **committed** as a versioned artifact —
+each commit captures which API contract version the frontend targets.
 
-## Why gitignored?
+## Why committed?
 
-CESAR is the canonical source. Committing a copy here would create a fork that drifts from the real spec. The ecosystem orchestrator (`cesar-orchestration`) validates compatibility between the two.
+CESAR (backend) owns the canonical spec, but committing a pinned copy here
+ensures:
 
-## How to get it
+- **Build independence**: Vercel/deploy builds don't need access to the cesar repo.
+- **Audit trail**: Every frontend commit references the exact API version it targets.
+- **CI reproducibility**: `npm run gen:api` runs against a known spec version.
+
+## How to update
+
+When the API contract changes in cesar:
 
 ```bash
+# 1. Sync the latest spec from cesar
 bash scripts/sync-oas.sh
+
+# 2. Regenerate orval types + hooks
+npm run gen:api
+
+# 3. Verify everything builds
+npm run typecheck
+npm run test
+
+# 4. Commit both the spec and regenerated types
+git add api/openapi.yaml src/api/generated/
+git commit -m "chore(oas): update pinned spec from cesar"
 ```
 
-This copies the latest spec from `~/Repos/cesar/api/openapi.yaml`.
+The ecosystem orchestrator (`cesar-orchestration`) validates compatibility
+between the backend spec and the frontend's pinned version.
 
 ## After syncing
-
-Regenerate the orval API client from the updated spec:
 
 ```bash
 npm run gen:api
 ```
 
-This produces typed TanStack Query hooks in `src/api/generated/` and model types in `src/api/generated/models/`.
+This produces typed TanStack Query hooks in `src/api/generated/` and model
+types in `src/api/generated/models/`.

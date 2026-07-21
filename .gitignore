@@ -37,5 +37,5 @@ npm-debug.log*
 # TypeScript incremental build cache
 *.tsbuildinfo
 
-# OAS spec (synced from cesar repo via scripts/sync-oas.sh, not committed)
-api/openapi.yaml
+# License audit artifact (generated on demand)
+license-report.csv

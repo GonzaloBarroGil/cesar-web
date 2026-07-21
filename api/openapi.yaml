@@ -1,0 +1,6093 @@
+openapi: 3.1.0
+info:
+  title: CESAR — Consorcio Expense & Service Administration Runtime
+  description: 'API for managing condominium consorcios under Argentine law.
+
+    Implements CCC Art. 2044-2057, ARCA RG 4290/2018, and CABA DI-1146/24.
+
+    Authentication via Bearer JWT with role-based access (ADMIN, ACCOUNTANT).'
+  version: 0.1.0
+  license:
+    name: AGPL-3.0-or-later
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+servers:
+- url: http://localhost:3000
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Consorcio
+  description: 'Consorcio management: legal entities, units, owners, fiscal periods'
+- name: Expenses
+  description: 'Expense management: CRUD, approval workflow, providers, concepts, categories'
+- name: Invoices
+  description: 'ARCA-compliant electronic invoicing: Facturas A/B/C, Notas, Recibos'
+- name: Debt
+  description: Liquidacion calculation and Certificado de Deuda generation
+- name: Payments
+  description: Payment registration, reversal, and balance tracking
+- name: IncomesOutputs
+  description: Cash-flow module for income and output entries
+- name: Auth
+  description: Authentication endpoints for JWT login and user info retrieval
+- name: Health
+  description: Health check endpoint for service and dependency status
+paths:
+  /consorcios:
+    post:
+      tags:
+      - Consorcio
+      summary: Create a new consorcio (ADMIN)
+      description: 'Registers a new condominium legal entity.  The CUIT must be a
+
+        valid, unique 11-digit Argentine tax identifier.  On success the
+
+        consorcio is created with status `ACTIVE`.
+
+        '
+      operationId: createConsorcio
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConsorcioRequest'
+      responses:
+        '201':
+          description: Consorcio created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsorcioResponse'
+        '400':
+          description: Malformed request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Duplicate CUIT or idempotency-key conflict.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Validation error (e.g. invalid CUIT checksum, empty razon_social,
+
+            month out of range, negative round-off limit, interest rate out of range).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server or database error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+      - Consorcio
+      summary: List all consorcios
+      description: Returns all consorcios with optional pagination.
+      operationId: listConsorcios
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum records to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Records to skip (pagination).
+      responses:
+        '200':
+          description: List of consorcios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsorcioResponse'
+        '400':
+          description: Malformed query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}:
+    get:
+      tags:
+      - Consorcio
+      summary: Retrieve a consorcio by ID
+      description: Returns the full consorcio aggregate by its UUID.
+      operationId: getConsorcio
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Consorcio found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsorcioResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - Consorcio
+      summary: Update consorcio fields (ADMIN)
+      description: 'Partial update.  Only the fields present in the request body are
+
+        modified.  Set `admin_matricula` to `null` to clear it.
+
+        '
+      operationId: updateConsorcio
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConsorcioRequest'
+      responses:
+        '200':
+          description: Consorcio updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsorcioResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency-key conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation or business rule violation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/ufs:
+    put:
+      tags:
+      - Consorcio
+      summary: Configure all UFs for a consorcio (ADMIN)
+      description: 'Replaces all unidades funcionales for the given consorcio.
+
+        The sum of `percentage` values across all UFs must equal exactly
+
+        `100.00`.  At least one active UF is required.
+
+
+        **CAUTION:** This is a full replacement, not a delta.
+
+        '
+      operationId: configureUfs
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigureUfsRequest'
+      responses:
+        '201':
+          description: UFs configured.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UfsResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Conflict – duplicate UF code or idempotency-key conflict.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Business rule violation:
+
+            - Percentages do not sum to exactly 100.00%.
+
+            - No active UFs.
+
+            - Invalid expense group.
+
+            - Duplicate exemption.
+
+            - Tenant is the same as owner.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/propietarios:
+    post:
+      tags:
+      - Consorcio
+      - Propietarios
+      summary: Register a new propietario (ADMIN)
+      description: 'Registers an owner or tenant in the consorcio''s propietario registry.
+
+        The `tax_id` combination of `type` + `value` must be unique within
+
+        the consorcio.
+
+        '
+      operationId: registerPropietario
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterPropietarioRequest'
+      responses:
+        '201':
+          description: Propietario registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropietarioResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate TaxId or idempotency-key conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Validation error – invalid email format, empty name, invalid
+
+            iva_condition, or invalid signature_hash.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+      - Consorcio
+      - Propietarios
+      summary: List all propietarios for a consorcio
+      description: Returns all registered owners and tenants for the given consorcio.
+      operationId: listPropietarios
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: List of propietarios.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropietarioListResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/propietarios/{tax_id}:
+    get:
+      tags:
+      - Consorcio
+      - Propietarios
+      summary: Find propietario by tax identifier
+      description: 'Looks up a propietario by raw tax-id string in the URL path.
+
+        The server parses the digits and attempts to match against
+
+        CUIT (11 digits), CUIL (11 digits), or DNI (8 digits).
+
+        '
+      operationId: findPropietarioByTaxId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: tax_id
+        in: path
+        required: true
+        description: 'Raw numeric tax identifier.  The server strips non-digit
+
+          characters and infers the type from length:
+
+          - 11 digits → tries CUIT, then CUIL.
+
+          - 8 digits  → DNI.
+
+          '
+        schema:
+          type: string
+          example: '20123456789'
+      responses:
+        '200':
+          description: Propietario found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropietarioResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio or propietario not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/periodos:
+    post:
+      tags:
+      - Consorcio
+      - Periods
+      summary: Open a new fiscal period (ADMIN)
+      description: 'Creates a new period with status `OPEN`.  Dates must satisfy:
+
+        `start_date < end_date < due_date`.  Only one OPEN period is
+
+        allowed per consorcio at any given time.  The `code` must be
+
+        unique within the consorcio.
+
+        '
+      operationId: openPeriod
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenPeriodRequest'
+      responses:
+        '201':
+          description: Period opened.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'Conflict – duplicate period code, another OPEN period already
+
+            exists, or idempotency-key conflict.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Validation error – invalid YYYYMM code, invalid date ordering
+
+            (end <= start or due < end), or other business rule violation.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/periodos/{period_id}/close:
+    put:
+      tags:
+      - Consorcio
+      - Periods
+      summary: Close an OPEN period (ADMIN)
+      description: 'Transitions the period from `OPEN` to `CLOSED`.  A `closed_at`
+
+        timestamp is set.  Once closed, charges are frozen and the period
+
+        is ready for archiving.
+
+
+        **State precondition:** period must be `OPEN`.
+
+        '
+      operationId: closePeriod
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: period_id
+        in: path
+        required: true
+        description: Period UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Period closed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio or period not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency-key conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Business rule violation – period is not `OPEN` (already closed,
+
+            archived, or in a state that cannot transition to CLOSED).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /consorcios/{id}/periodos/{period_id}/archive:
+    put:
+      tags:
+      - Consorcio
+      - Periods
+      summary: Archive a CLOSED period (ADMIN)
+      description: 'Transitions the period from `CLOSED` to `ARCHIVED`.  Once archived,
+
+        the period is immutable – no further modifications, charges,
+
+        or liquidations are permitted.
+
+
+        **State precondition:** period must be `CLOSED`.
+
+        '
+      operationId: archivePeriod
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Consorcio UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: period_id
+        in: path
+        required: true
+        description: Period UUID.
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Period archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodResponse'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an ADMIN.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Consorcio or period not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency-key conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 'Business rule violation – period is not `CLOSED` (still open
+
+            or already archived).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /expenses:
+    post:
+      summary: Create an expense
+      description: 'Creates one or more expense entries. For multi-term expenses (`total_terms > 1`),
+
+        returns one entry per term. `ORDINARIA` expenses are auto-approved;
+
+        `EXTRAORDINARIA` expenses start in `PENDING` status.
+
+        '
+      operationId: createExpense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Idempotency key to prevent duplicate submissions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseRequest'
+      responses:
+        '201':
+          description: Expense(s) created successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List expenses
+      description: 'Returns expenses filtered by optional query parameters. Only returns the
+
+        latest version of each expense. Tombstone entries are excluded unless
+
+        `include_deleted=true`.
+
+        '
+      operationId: listExpenses
+      tags:
+      - Expenses
+      parameters:
+      - name: consorcio_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: period_code
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9]{6}$
+          description: YYYYMM format.
+      - name: category_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: concept_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: provider_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ORDINARIA
+          - EXTRAORDINARIA
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+      - name: include_deleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: Paginated list of expenses.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/{id}/versions:
+    get:
+      summary: Get expense version history
+      description: 'Returns all versions of an expense in ascending version order, forming
+
+        the complete hash-chain audit trail.
+
+        '
+      operationId: getExpenseVersions
+      tags:
+      - Expenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Expense logical ID.
+      responses:
+        '200':
+          description: List of all expense versions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/{id}/tombstone:
+    put:
+      summary: Tombstone (soft-delete) an expense
+      description: 'Logically deletes an expense by creating a new version with `tombstone=true`.
+
+        Cannot tombstone an already deleted expense.
+
+        '
+      operationId: tombstoneExpense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Expense logical ID.
+      responses:
+        '200':
+          description: Tombstoned expense version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/{id}/approve:
+    put:
+      summary: Approve an extraordinary expense
+      description: 'Transitions a `PENDING` extraordinary expense to `APPROVED`. Only
+
+        applicable to expenses of type `EXTRAORDINARIA`.
+
+        '
+      operationId: approveExpense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Expense logical ID.
+      responses:
+        '200':
+          description: Approved expense.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/{id}/reject:
+    put:
+      summary: Reject an extraordinary expense
+      description: 'Transitions a `PENDING` extraordinary expense to `REJECTED`. Only
+
+        applicable to expenses of type `EXTRAORDINARIA`.
+
+        '
+      operationId: rejectExpense
+      tags:
+      - Expenses
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Expense logical ID.
+      responses:
+        '200':
+          description: Rejected expense.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/concepts:
+    post:
+      summary: Create a concept
+      description: Create a new expense concept under a concept group.
+      operationId: createConcept
+      tags:
+      - Expenses
+      - Concepts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConceptRequest'
+      responses:
+        '201':
+          description: Concept created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConceptResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List all concepts
+      description: Returns all concepts across all groups.
+      operationId: listConcepts
+      tags:
+      - Expenses
+      - Concepts
+      responses:
+        '200':
+          description: List of concepts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConceptResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/concepts/{group}:
+    get:
+      summary: List concepts by group
+      description: Returns concepts filtered by their group.
+      operationId: listConceptsByGroup
+      tags:
+      - Expenses
+      - Concepts
+      parameters:
+      - name: group
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - SERVICIOS
+          - MANTENIMIENTO
+          - PERSONAL
+          - IMPUESTOS
+          - SEGUROS
+          - OTROS
+        description: Concept group name (SCREAMING_SNAKE_CASE).
+      responses:
+        '200':
+          description: List of concepts in the group.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConceptResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/categories:
+    post:
+      summary: Create a category
+      description: Create a new expense category with an optional default concept.
+      operationId: createCategory
+      tags:
+      - Expenses
+      - Categories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List all categories
+      description: Returns all expense categories.
+      operationId: listCategories
+      tags:
+      - Expenses
+      - Categories
+      responses:
+        '200':
+          description: List of categories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/providers:
+    post:
+      summary: Register a provider
+      description: Register a new provider (individual or company) with CUIT validation.
+      operationId: registerProvider
+      tags:
+      - Expenses
+      - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProviderRequest'
+      responses:
+        '201':
+          description: Provider registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List all providers
+      description: Returns all registered providers (tombstoned included).
+      operationId: listProviders
+      tags:
+      - Expenses
+      - Providers
+      responses:
+        '200':
+          description: List of providers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/providers/{id}:
+    put:
+      summary: Update a provider
+      description: 'Partially updates a provider''s name, IVA condition, provider type,
+
+        or contact details. Use `null` for `contact_email` or `contact_phone`
+
+        to explicitly clear them.
+
+        '
+      operationId: updateProvider
+      tags:
+      - Expenses
+      - Providers
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Provider ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProviderRequest'
+      responses:
+        '200':
+          description: Updated provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /expenses/providers/{id}/tombstone:
+    put:
+      summary: Tombstone a provider
+      description: 'Soft-deletes a provider. Fails with 409 if any expense still references
+
+        this provider.
+
+        '
+      operationId: tombstoneProvider
+      tags:
+      - Expenses
+      - Providers
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Provider ID.
+      responses:
+        '200':
+          description: Tombstoned provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+  /invoices/factura-a:
+    post:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Create Factura A
+      description: 'Creates an ARCA-compliant Factura A (RI → RI).
+
+        Requires Admin or Accountant role.
+
+        CAE must be valid, non-empty alphanumeric (min 10 chars), and not expired.
+
+        Receptor CUIT is mandatory. Receptor IVA condition must be RI.
+
+        IVA is fully discriminated by rate.
+
+        '
+      operationId: createFacturaA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFacturaARequest'
+      responses:
+        '201':
+          description: Factura A created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/factura-b:
+    post:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Create Factura B
+      description: 'Creates an ARCA-compliant Factura B (RI → CF/Exento/Mono).
+
+        Requires Admin or Accountant role.
+
+        Receptor CUIT optional unless importe_total >= $5,000 (RG 1415 AX II).
+
+        IVA is NOT discriminated — embedded in price.
+
+        '
+      operationId: createFacturaB
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFacturaBRequest'
+      responses:
+        '201':
+          description: Factura B created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/factura-c:
+    post:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Create Factura C
+      description: 'Creates an ARCA-compliant Factura C (Any → CF/Exento).
+
+        Requires Admin or Accountant role.
+
+        IVA is NOT discriminated.
+
+        '
+      operationId: createFacturaC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFacturaCRequest'
+      responses:
+        '201':
+          description: Factura C created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/{id}:
+    get:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Get invoice by ID
+      description: Retrieve a single invoice (Factura A/B/C) by its UUID.
+      operationId: getInvoice
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Invoice UUID
+      responses:
+        '200':
+          description: Invoice found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /invoices/cae/{cae}:
+    get:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Get invoice by CAE
+      description: Retrieve an invoice by its CAE (Código de Autorización Electrónico).
+      operationId: getInvoiceByCae
+      parameters:
+      - name: cae
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+        description: 'Alphanumeric CAE code (min 10 chars).
+
+          Issued by ARCA per RG 4291 Art. 12.
+
+          '
+      responses:
+        '200':
+          description: Invoice found by CAE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /invoices/{id}/anular:
+    put:
+      tags:
+      - Invoices
+      - Facturas
+      summary: Annul invoice
+      description: 'Transitions the invoice status from ACTIVA to ANULADA.
+
+        Requires Admin role. This is an immutable state change per P3 audit rules.
+
+        An anulada invoice cannot be modified or tombstoned.
+
+        '
+      operationId: anularInvoice
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Invoice UUID to annul
+      responses:
+        '200':
+          description: Invoice annulled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/{id}/nota-credito:
+    post:
+      tags:
+      - Invoices
+      - Notas de Crédito
+      summary: Create Nota de Crédito
+      description: 'Creates a credit note (NC) referencing an existing active invoice.
+
+        Requires Admin or Accountant role.
+
+        The NC amount cannot exceed the remaining amount of the original invoice.
+
+        The `comprobante_asociado` fields (type, punto_venta, numero) are
+
+        automatically extracted from the referenced invoice.
+
+        '
+      operationId: createNotaCredito
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Original invoice UUID this NC resolves against
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotaCreditoRequest'
+      responses:
+        '201':
+          description: Nota de Crédito created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotaCreditoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/nota-credito/{id}/anular:
+    put:
+      tags:
+      - Invoices
+      - Notas de Crédito
+      summary: Annul Nota de Crédito
+      description: 'Transitions a Nota de Crédito to ANULADA status.
+
+        Requires Admin role.
+
+        '
+      operationId: anularNotaCredito
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Nota de Crédito UUID to annul
+      responses:
+        '200':
+          description: Nota de Crédito annulled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotaCreditoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/{id}/nota-debito:
+    post:
+      tags:
+      - Invoices
+      - Notas de Débito
+      summary: Create Nota de Débito
+      description: 'Creates a debit note (ND) referencing an existing active invoice.
+
+        Requires Admin or Accountant role.
+
+        Unlike NC, ND is NOT constrained by the original invoice amount.
+
+        '
+      operationId: createNotaDebito
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Original invoice UUID this ND augments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotaDebitoRequest'
+      responses:
+        '201':
+          description: Nota de Débito created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotaDebitoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /invoices/nota-debito/{id}/anular:
+    put:
+      tags:
+      - Invoices
+      - Notas de Débito
+      summary: Annul Nota de Débito
+      description: 'Transitions a Nota de Débito to ANULADA status.
+
+        Requires Admin role.
+
+        '
+      operationId: anularNotaDebito
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Nota de Débito UUID to annul
+      responses:
+        '200':
+          description: Nota de Débito annulled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotaDebitoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /recibos:
+    post:
+      tags:
+      - Invoices
+      - Recibos
+      summary: Create Recibo
+      description: 'Creates a payment receipt (Recibo B or C).
+
+        Requires Admin or Accountant role.
+
+        Must reference at least one of: an invoice or a liquidación.
+
+        `importe_pagado` must be positive. `medio_pago` is required.
+
+        '
+      operationId: createRecibo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReciboRequest'
+      responses:
+        '201':
+          description: Recibo created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReciboResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /recibos/{id}:
+    get:
+      tags:
+      - Invoices
+      - Recibos
+      summary: Get Recibo by ID
+      description: Retrieve a single Recibo by its UUID.
+      operationId: getRecibo
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Recibo UUID
+      responses:
+        '200':
+          description: Recibo found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReciboResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /recibos/{id}/anular:
+    put:
+      tags:
+      - Invoices
+      - Recibos
+      summary: Annul Recibo
+      description: 'Transitions a Recibo status from ACTIVO to ANULADO.
+
+        Requires Admin role.
+
+        '
+      operationId: anularRecibo
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Recibo UUID to annul
+      responses:
+        '200':
+          description: Recibo annulled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReciboResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /debt/liquidaciones:
+    post:
+      tags:
+      - Debt
+      - Liquidaciones
+      summary: Generate liquidación for a single unit
+      description: 'Generates a liquidación (monthly debt statement) for a single unidad
+
+        funcional in a given fiscal period.
+
+        Requires ADMIN role. The authenticated user must have a consorcio_id.
+
+        The period code must be in YYYYMM format (e.g. "202606").
+
+        '
+      operationId: generateLiquidacion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLiquidacionRequest'
+      responses:
+        '201':
+          description: Liquidación generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateLiquidacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+    get:
+      tags:
+      - Debt
+      - Liquidaciones
+      summary: List liquidaciones
+      description: 'List liquidaciones with optional filters: consorcio_id, period_code,
+
+        unit_id, and status. If consorcio_id is not specified, it is taken
+
+        from the authenticated user''s scope.
+
+        '
+      operationId: listLiquidaciones
+      parameters:
+      - name: consorcio_id
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Filter by consorcio (defaults to user scope).
+      - name: period_code
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9]{6}$
+        description: Filter by fiscal period in YYYYMM format.
+        example: '202606'
+      - name: unit_id
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Filter by unidad funcional.
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - ISSUED
+          - SETTLED
+          - CANCELLED
+        description: 'Filter by liquidación status (case-insensitive).
+
+          Valid values: DRAFT, ISSUED, SETTLED, CANCELLED.
+
+          '
+      responses:
+        '200':
+          description: List of liquidaciones matching the filters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLiquidacionesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /debt/liquidaciones/batch:
+    post:
+      tags:
+      - Debt
+      - Liquidaciones
+      summary: Generate liquidaciones for all units
+      description: 'Generates liquidaciones for every active unidad funcional in the
+
+        consorcio for the given fiscal period.
+
+        Requires ADMIN role.
+
+        '
+      operationId: generateLiquidacionBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateBatchLiquidacionRequest'
+      responses:
+        '201':
+          description: Batch of liquidaciones generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateBatchLiquidacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /debt/liquidaciones/{id}:
+    get:
+      tags:
+      - Debt
+      - Liquidaciones
+      summary: Get liquidación by ID
+      description: Retrieve a single liquidación by its UUID.
+      operationId: getLiquidacion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Liquidación UUID
+      responses:
+        '200':
+          description: Liquidación found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLiquidacionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /debt/liquidaciones/{id}/issue:
+    put:
+      tags:
+      - Debt
+      - Liquidaciones
+      summary: Issue a liquidación
+      description: 'Transitions a liquidación from DRAFT to ISSUED status.
+
+        Once issued, the liquidación becomes immutable for recalculation.
+
+        Requires ADMIN role.
+
+        Valid transitions: DRAFT → ISSUED.
+
+        '
+      operationId: issueLiquidacion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Liquidación UUID to issue
+      responses:
+        '200':
+          description: Liquidación issued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueLiquidacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /debt/liquidaciones/{id}/pdf:
+    get:
+      tags:
+      - Debt
+      - PDF
+      summary: Download liquidación as PDF
+      description: 'Download a liquidación as a PDF document.
+
+        **CURRENTLY NOT IMPLEMENTED** — returns 501 Not Implemented
+
+        pending PDF generation infrastructure.
+
+        '
+      operationId: downloadLiquidacionPdf
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Liquidación UUID
+      responses:
+        '501':
+          description: PDF generation is not yet available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /debt/certificados:
+    post:
+      tags:
+      - Debt
+      - Certificados
+      summary: Generate certificado de deuda
+      description: 'Generates a Certificado de Deuda from an issued liquidación.
+
+        The certificado can serve as an executive title under CCC Art. 2048 ¶4
+
+        when signed by the administrator.
+
+        Requires ADMIN role.
+
+        '
+      operationId: generateCertificado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCertificadoRequest'
+      responses:
+        '201':
+          description: Certificado de Deuda generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateCertificadoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+    get:
+      tags:
+      - Debt
+      - Certificados
+      summary: List certificados by unit
+      description: 'List all certificados de deuda for a given unidad funcional.
+
+        The unit_id query parameter is required.
+
+        '
+      operationId: listCertificados
+      parameters:
+      - name: unit_id
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Unidad funcional UUID.
+      responses:
+        '200':
+          description: List of certificados for the unit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCertificadosResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /debt/certificados/{id}:
+    get:
+      tags:
+      - Debt
+      - Certificados
+      summary: Get certificado de deuda
+      description: Retrieve a single certificado de deuda by its UUID.
+      operationId: getCertificado
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Certificado UUID
+      responses:
+        '200':
+          description: Certificado found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCertificadoResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /debt/certificados/{id}/sign:
+    put:
+      tags:
+      - Debt
+      - Certificados
+      summary: Sign certificado de deuda
+      description: 'Adds the administrator''s signature to the certificado, making it
+
+        a legally enforceable executive title (CCC Art. 2048 ¶4).
+
+        Requires ADMIN role.
+
+        If the signature is a non-empty string, `is_executive_title` becomes true.
+
+        '
+      operationId: signCertificado
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+        description: Certificado UUID to sign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignCertificadoRequest'
+      responses:
+        '200':
+          description: Certificado signed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignCertificadoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /payments:
+    post:
+      summary: Create a payment
+      description: 'Registers a new ACTIVE payment and auto-generates a linked Recibo B/C.
+
+        Payment amount must be greater than 0.00 and payment date must not be
+
+        in the future. For CASH payments without a voucher, a `[NO_VOUCHER]`
+
+        warning is appended to the notes.
+
+        '
+      operationId: createPayment
+      tags:
+      - Payments
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Idempotency key to prevent duplicate submissions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Payment created with auto-generated Recibo B/C.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List payments
+      description: 'Returns payments filtered by optional query parameters. Supports
+
+        filtering by unit, period, method, status, and pagination via
+
+        `limit`/`offset`.
+
+        '
+      operationId: listPayments
+      tags:
+      - Payments
+      parameters:
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID (required for multi-tenant isolation).
+      - name: unit_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter by unit functional ID (e.g., "UF-1A").
+      - name: period_code
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/YYYYMM'
+      - name: method
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PaymentMethod'
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PaymentStatus'
+      - name: include_tombstones
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        description: Max records to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+        description: Records to skip (pagination).
+      responses:
+        '200':
+          description: List of payments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /payments/{id}:
+    get:
+      summary: Get a payment
+      description: Retrieve a single payment by ID.
+      operationId: getPayment
+      tags:
+      - Payments
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Payment ID.
+      responses:
+        '200':
+          description: Payment details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  /payments/{id}/reverse:
+    post:
+      summary: Reverse a payment
+      description: 'Creates a new REVERSED payment entry compensating the original. The
+
+        original payment stays ACTIVE (append-only). The reversal copies the
+
+        original''s amount, unit, period, and method but does not carry over
+
+        the recibo or voucher.
+
+        '
+      operationId: reversePayment
+      tags:
+      - Payments
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Original payment ID to reverse.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReversePaymentRequest'
+      responses:
+        '201':
+          description: Reversal payment created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /payments/unit/{unit_id}/balance:
+    get:
+      summary: Get unit balance
+      description: 'Returns the financial balance summary for a unit across all periods:
+
+        total debt, total paid, outstanding, and overpayment.
+
+        '
+      operationId: getUnitBalance
+      tags:
+      - Payments
+      parameters:
+      - name: unit_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unit functional ID (e.g., "UF-1A").
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      responses:
+        '200':
+          description: Unit balance summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitBalanceResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /payments/unit/{unit_id}/history:
+    get:
+      summary: Get unit payment history
+      description: 'Returns all payments for a unit ordered by payment date descending.
+
+        Includes both ACTIVE and REVERSED entries with reversal metadata.
+
+        '
+      operationId: getUnitPaymentHistory
+      tags:
+      - Payments
+      parameters:
+      - name: unit_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unit functional ID (e.g., "UF-1A").
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      responses:
+        '200':
+          description: Payment history entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentHistoryEntry'
+        '401':
+          $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+  /incomes-outputs:
+    post:
+      summary: Create an income-output entry
+      description: 'Creates a new ACTIVE entry. Amount must be > 0.00 and the direction must
+
+        match the sub_type prefix (e.g., `INCOME` with `INCOME_RENT`). Temporary
+
+        output sub_types auto-attach migration tags.
+
+        '
+      operationId: createEntry
+      tags:
+      - IncomesOutputs
+      - Entries
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Idempotency key to prevent duplicate submissions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntryRequest'
+      responses:
+        '201':
+          description: Entry created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeOutputResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+    get:
+      summary: List income-output entries
+      description: 'Returns entries filtered by consorcio, period, direction, sub_type,
+
+        status, date range, and tags.
+
+        '
+      operationId: listEntries
+      tags:
+      - IncomesOutputs
+      - Entries
+      parameters:
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      - name: period_code
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/YYYYMM'
+      - name: direction
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/FlowDirection'
+      - name: sub_type
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/FlowSubType'
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/IncomeOutputStatus'
+      - name: date_from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Inclusive start of date range.
+      - name: date_to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Inclusive end of date range.
+      - name: tags
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+        description: Filter entries containing at least one of these tags.
+        style: form
+        explode: true
+      responses:
+        '200':
+          description: List of entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IncomeOutputResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /incomes-outputs/{entry_id}:
+    get:
+      summary: Get an entry
+      description: Retrieve the latest version of a single entry by ID.
+      operationId: getEntry
+      tags:
+      - IncomesOutputs
+      - Entries
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entry ID.
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      responses:
+        '200':
+          description: Entry details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeOutputResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      summary: Update an entry
+      description: 'Creates a new version of the entry (append-only). Only provided fields
+
+        are changed. Direction is immutable and cannot be changed via update.
+
+        Cannot update a CANCELLED entry.
+
+        '
+      operationId: updateEntry
+      tags:
+      - IncomesOutputs
+      - Entries
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entry ID.
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncomeOutputUpdate'
+      responses:
+        '200':
+          description: Updated entry (new version).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeOutputResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /incomes-outputs/{entry_id}/cancel:
+    put:
+      summary: Cancel an entry
+      description: 'Cancels an entry (append-only tombstone). Creates a new version with
+
+        `status = CANCELLED` and `tombstone = true`. Cannot cancel an already
+
+        cancelled entry.
+
+        '
+      operationId: cancelEntry
+      tags:
+      - IncomesOutputs
+      - Entries
+      security:
+      - bearerAuth:
+        - ADMIN
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entry ID.
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      responses:
+        '200':
+          description: Cancelled entry (new tombstone version).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeOutputResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+  /incomes-outputs/summary/{period_code}:
+    get:
+      summary: Get single-period financial summary
+      description: 'Returns the financial summary for a specific period:
+
+        total income, total output, and net flow (income - output).
+
+        Only ACTIVE entries are included.
+
+        '
+      operationId: getFinancialSummary
+      tags:
+      - IncomesOutputs
+      - Summaries
+      parameters:
+      - name: period_code
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/YYYYMM'
+        description: Period code (YYYYMM).
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      responses:
+        '200':
+          description: Financial summary for the period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialSummary'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /incomes-outputs/summary:
+    get:
+      summary: Get cross-period financial summary
+      description: 'Returns financial summaries for a range of periods with cascading
+
+        opening and closing balances. Each period shows income, output, net
+
+        flow, opening balance, and closing balance.
+
+
+        Response is a map of `period_code → FinancialSummary`.
+
+        '
+      operationId: getCrossPeriodSummary
+      tags:
+      - IncomesOutputs
+      - Summaries
+      parameters:
+      - name: consorcio_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The consorcio ID.
+      - name: start_period
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/YYYYMM'
+        description: Inclusive start period (YYYYMM).
+      - name: end_period
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/YYYYMM'
+        description: Inclusive end period (YYYYMM).
+      responses:
+        '200':
+          description: Map of period_code to financial summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/FinancialSummary'
+                description: Period code (YYYYMM) → FinancialSummary.
+                example:
+                  '202601':
+                    total_income:
+                      amount: '50000.00'
+                      currency: ARS
+                    total_output:
+                      amount: '120000.00'
+                      currency: ARS
+                    net_flow:
+                      amount: '-70000.00'
+                      currency: ARS
+                    opening_balance:
+                      amount: '15000.00'
+                      currency: ARS
+                    closing_balance:
+                      amount: '-55000.00'
+                      currency: ARS
+        '401':
+          $ref: '#/components/responses/401'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/500'
+  /health:
+    get:
+      tags:
+      - Health
+      summary: Health check
+      description: Returns the health status of the service and its dependencies.
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: All dependencies healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: One or more dependencies unhealthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Login
+      description: Authenticates a user and returns a JWT token.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Malformed request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/me:
+    get:
+      tags:
+      - Auth
+      summary: Get current user
+      description: Returns the authenticated user's information from the JWT token.
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: User information retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          description: Missing or invalid authentication.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained via POST /api/v1/auth/login
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Unique idempotency key for safe request retries
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      description: Universally unique identifier (v7).
+      example: 550e8400-e29b-41d4-a716-446655440000
+    Money:
+      type: object
+      description: Monetary amount in Argentine pesos with 2-decimal precision.
+      properties:
+        amount:
+          type: string
+          description: Decimal value with up to 2 fractional digits.
+          example: '1500.50'
+        currency:
+          type: string
+          enum:
+          - ARS
+          default: ARS
+          description: ISO 4217 currency code.
+      required:
+      - amount
+    YYYYMM:
+      type: object
+      description: Year-month code in `YYYYMM` format (years 2000–2099, months 01–12).
+      properties:
+        code:
+          type: string
+          pattern: ^(20[0-9]{2}|209[0-9])(0[1-9]|1[0-2])$
+          description: Six-digit year-month.
+          example: '202606'
+      required:
+      - code
+    Percentage:
+      type: object
+      description: Percentage value between 0.00 and 100.00 inclusive.
+      properties:
+        value:
+          type: string
+          description: Decimal percentage (0.00–100.00).
+          example: '12.50'
+      required:
+      - value
+    CUIT:
+      type: object
+      description: Argentine tax identifier (CUIT).  Exactly 11 digits with a valid checksum.
+      properties:
+        value:
+          type: string
+          pattern: ^\d{11}$
+          description: 11 numeric digits with modulo-11 checksum.
+          example: '30711111111'
+      required:
+      - value
+    Date:
+      type: string
+      format: date
+      description: ISO 8601 date (no time component).
+      example: '2026-06-01'
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 UTC timestamp.
+      example: '2026-06-23T14:30:00Z'
+    Hash:
+      type: string
+      minLength: 64
+      maxLength: 64
+      pattern: ^[a-fA-F0-9]{64}$
+      description: SHA-256 hex digest (64 characters).
+    IvaCondition:
+      type: string
+      enum:
+      - RI
+      - EXENTO
+      - MONOTRIBUTISTA
+      - CF
+      description: 'AFIP IVA condition:
+
+        - `RI` – Responsable Inscripto
+
+        - `EXENTO` – Exento
+
+        - `MONOTRIBUTISTA` – Monotributista
+
+        - `CF` – Consumidor Final
+
+        '
+    ErrorResponse:
+      type: object
+      description: Standard error envelope for all API errors.
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 'Machine-readable error code:
+
+                - `UNAUTHORIZED` – Missing or invalid JWT.
+
+                - `FORBIDDEN` – Insufficient role (requires ADMIN).
+
+                - `NOT_FOUND` – Resource does not exist.
+
+                - `CONFLICT` – Duplicate or state conflict.
+
+                - `IDEMPOTENCY_CONFLICT` – Idempotency key mismatch.
+
+                - `VALIDATION_ERROR` – Input validation failure.
+
+                - `BUSINESS_RULE_VIOLATION` – Domain invariant violated.
+
+                - `INTERNAL_ERROR` – Unexpected server error.
+
+                - `DATABASE_ERROR` – Persistence failure.
+
+                '
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              description: Human-readable description.
+              example: CUIT must have 11 digits, got 10
+            details:
+              type: array
+              items:
+                $ref: '#/components/schemas/ErrorDetail'
+              description: Optional per-field details when applicable.
+          required:
+          - code
+          - message
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          description: The field or parameter that caused the error.
+        message:
+          type: string
+          description: Human-readable explanation of the problem.
+    TaxId:
+      type: object
+      description: 'Tax identification.  The `type` field selects the scheme:
+
+        - `CUIT` – 11-digit CUIT
+
+        - `CUIL` – 11-digit CUIL
+
+        - `DNI`  – 8-digit national ID
+
+        The `value` holds the raw numeric string.
+
+        '
+      properties:
+        type:
+          type: string
+          enum:
+          - CUIT
+          - CUIL
+          - DNI
+          description: Identification scheme.
+          example: CUIT
+        value:
+          type: string
+          description: Raw document number.
+          example: '20123456789'
+      required:
+      - type
+      - value
+    ConsorcioStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      description: Lifecycle status of a consorcio.
+    UfStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      description: Lifecycle status of a unidad funcional.
+    PeriodStatus:
+      type: string
+      enum:
+      - OPEN
+      - CLOSED
+      - ARCHIVED
+      description: 'Fiscal period state machine:
+
+        - `OPEN` – accepting charges / liquidations.
+
+        - `CLOSED` – charges frozen, ready for archive.
+
+        - `ARCHIVED` – immutable; no further modifications allowed.
+
+        Transitions: OPEN → CLOSED → ARCHIVED (no skipping, no reversing).
+
+        '
+    Consorcio:
+      type: object
+      description: 'Aggregate root representing a condominium legal entity (CCC Art. 2044).
+
+        '
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        cuit:
+          $ref: '#/components/schemas/CUIT'
+        razon_social:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Legal name of the consorcio, trimmed.
+          example: Consorcio Edificio Las Palmas
+        domicilio:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Physical address, trimmed.
+          example: Av. Santa Fe 2840, CABA
+        admin_matricula:
+          oneOf:
+          - type: string
+            pattern: ^MAT-\d{3}-\d{5}$
+            description: CABA Ley 941 administrator matrícula (format `MAT-NNN-NNNNN`).
+            example: MAT-001-12345
+          - type: 'null'
+        fiscal_year_start:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Month (1–12) on which the fiscal year begins.
+          example: 1
+        late_interest_rate:
+          $ref: '#/components/schemas/Percentage'
+        round_off_limit:
+          $ref: '#/components/schemas/Money'
+        status:
+          $ref: '#/components/schemas/ConsorcioStatus'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+      required:
+      - id
+      - cuit
+      - razon_social
+      - domicilio
+      - fiscal_year_start
+      - late_interest_rate
+      - round_off_limit
+      - status
+      - created_at
+      - updated_at
+    Exemption:
+      type: object
+      description: Expense-group exemption for a unidad funcional.
+      properties:
+        expense_group:
+          type: string
+          minLength: 1
+          description: Expense group code that the UF is exempt from.
+          example: A
+        reason:
+          type: string
+          minLength: 1
+          description: Justification for the exemption.
+          example: Not applicable per assembly act 2025-03
+      required:
+      - expense_group
+      - reason
+    UnidadFuncional:
+      type: object
+      description: 'Functional unit within a consorcio (CCC Art. 2056(f)(g)).
+
+        Represents an apartment, garage, commercial unit, etc.
+
+        '
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        code:
+          type: string
+          minLength: 1
+          description: Unique identifier within the consorcio (e.g. "1A", "PB", "COCH-01").
+          example: 1A
+        percentage:
+          $ref: '#/components/schemas/Percentage'
+        floor:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Floor number (0 = ground floor).
+          example: 3
+        apartment:
+          type: string
+          nullable: true
+          description: Apartment label (e.g. "A", "A-BIS").
+          example: A
+        current_owner_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        current_tenant_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        expense_exemptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exemption'
+        status:
+          $ref: '#/components/schemas/UfStatus'
+      required:
+      - id
+      - consorcio_id
+      - code
+      - percentage
+      - expense_exemptions
+      - status
+    Propietario:
+      type: object
+      description: Registered owner or tenant in the propietario registry.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        tax_id:
+          $ref: '#/components/schemas/TaxId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Full name, trimmed.
+          example: Juan Pérez
+        email:
+          type: string
+          format: email
+          minLength: 5
+          description: Valid email address (must contain `@` and a domain with `.`).
+          example: juan.perez@example.com
+        phone:
+          type: string
+          nullable: true
+          description: Optional contact phone number.
+          example: +54 11 5555-0123
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        signature_hash:
+          type: string
+          nullable: true
+          minLength: 64
+          maxLength: 64
+          pattern: ^[a-fA-F0-9]{64}$
+          description: 'SHA-256 hash of the propietario''s digital signature (exactly 64 hex chars).
+
+            Used for receipt validation.
+
+            '
+          example: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+      required:
+      - id
+      - tax_id
+      - name
+      - email
+      - iva_condition
+      - created_at
+      - updated_at
+    Period:
+      type: object
+      description: 'Fiscal period (CCC Art. 2067(e)).  Governed by a state machine:
+
+        OPEN → CLOSED → ARCHIVED.
+
+        '
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        code:
+          $ref: '#/components/schemas/YYYYMM'
+        start_date:
+          $ref: '#/components/schemas/Date'
+        end_date:
+          $ref: '#/components/schemas/Date'
+        due_date:
+          $ref: '#/components/schemas/Date'
+        status:
+          $ref: '#/components/schemas/PeriodStatus'
+        closed_at:
+          oneOf:
+          - $ref: '#/components/schemas/Timestamp'
+          - type: 'null'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+      required:
+      - id
+      - consorcio_id
+      - code
+      - start_date
+      - end_date
+      - due_date
+      - status
+      - created_at
+      - updated_at
+    CreateConsorcioRequest:
+      type: object
+      description: Payload to create a new consorcio.
+      properties:
+        cuit:
+          type: string
+          pattern: ^\d{11}$
+          description: Consorcio CUIT (11 digits, valid modulo-11 checksum).
+          example: '30711111111'
+        razon_social:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Legal name (trimmed).
+          example: Consorcio Edificio Las Palmas
+        domicilio:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Physical address (trimmed).
+          example: Av. Santa Fe 2840, CABA
+        admin_matricula:
+          type: string
+          nullable: true
+          pattern: ^MAT-\d{3}-\d{5}$
+          description: 'CABA Ley 941 administrator registration number.
+
+            Format: `MAT-NNN-NNNNN`.  Optional; omit or set `null`.
+
+            '
+          example: MAT-001-12345
+        fiscal_year_start:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Month (1–12) on which the fiscal year begins.
+          example: 1
+        late_interest_rate:
+          type: string
+          description: Late-payment interest rate as a decimal percentage (0.00–100.00).
+          example: '3.50'
+        round_off_limit:
+          type: string
+          description: 'Maximum rounding difference allowed when distributing expenses.
+
+            Must be non-negative.  E.g. `"0.50"` means rounding differences
+
+            up to 50 cents are absorbed without further proration.
+
+            '
+          example: '0.50'
+      required:
+      - cuit
+      - razon_social
+      - domicilio
+      - fiscal_year_start
+      - late_interest_rate
+      - round_off_limit
+    UpdateConsorcioRequest:
+      type: object
+      description: 'Partial update of consorcio fields.  Every field is optional;
+
+        only supplied fields are changed.  Use `null` for `admin_matricula`
+
+        to clear the value.
+
+        '
+      properties:
+        razon_social:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Consorcio Edificio Las Palmas II
+        domicilio:
+          type: string
+          minLength: 1
+          maxLength: 300
+          example: Av. Córdoba 1234, CABA
+        admin_matricula:
+          oneOf:
+          - type: string
+            pattern: ^MAT-\d{3}-\d{5}$
+          - type: 'null'
+          description: Set to a valid matrícula, or `null` to clear it.
+          example: MAT-002-67890
+        fiscal_year_start:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 7
+        late_interest_rate:
+          type: string
+          description: Decimal percentage (0.00–100.00).
+          example: '4.00'
+        round_off_limit:
+          type: string
+          description: Non-negative decimal amount.
+          example: '1.00'
+    ConfigureUfsRequest:
+      type: object
+      description: 'Full replacement of all unidades funcionales for a consorcio.
+
+        **Invariant:** the sum of all `percentage` values must equal exactly `100.00`.
+
+        At least one active UF must be present.
+
+        '
+      properties:
+        ufs:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/UfInput'
+      required:
+      - ufs
+    UfInput:
+      type: object
+      description: Input for a single unidad funcional.
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Unique code within the consorcio.
+          example: 1A
+        percentage:
+          type: string
+          description: Prorate percentage for this UF (0.00–100.00).
+          example: '25.00'
+        floor:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Floor number.
+          example: 1
+        apartment:
+          type: string
+          nullable: true
+          description: Apartment label.
+          example: A
+        current_owner_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        current_tenant_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        expense_exemptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExemptionInput'
+          default: []
+      required:
+      - code
+      - percentage
+    ExemptionInput:
+      type: object
+      properties:
+        expense_group:
+          type: string
+          minLength: 1
+          example: A
+        reason:
+          type: string
+          minLength: 1
+          example: Not applicable
+      required:
+      - expense_group
+      - reason
+    RegisterPropietarioRequest:
+      type: object
+      description: Payload to register a new owner or tenant.
+      properties:
+        tax_id:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - CUIT
+              - CUIL
+              - DNI
+              example: CUIT
+            value:
+              type: string
+              example: '20123456789'
+          required:
+          - type
+          - value
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Full name, trimmed.
+          example: Juan Pérez
+        email:
+          type: string
+          format: email
+          minLength: 5
+          description: Valid email with `@` and a domain containing `.`.
+          example: juan.perez@example.com
+        phone:
+          type: string
+          nullable: true
+          description: Contact phone number.
+          example: +54 11 5555-0123
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        signature_hash:
+          type: string
+          nullable: true
+          minLength: 64
+          maxLength: 64
+          pattern: ^[a-fA-F0-9]{64}$
+          description: SHA-256 hex digest of digital signature (64 chars).
+          example: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+      required:
+      - tax_id
+      - name
+      - email
+      - iva_condition
+    OpenPeriodRequest:
+      type: object
+      description: 'Payload to open a new fiscal period.  Dates must satisfy:
+
+        `start_date < end_date < due_date`.
+
+        Only **one** OPEN period is allowed per consorcio at a time.
+
+        '
+      properties:
+        code:
+          type: string
+          pattern: ^(20[0-9]{2}|209[0-9])(0[1-9]|1[0-2])$
+          description: Period code in YYYYMM format. Must be unique within the consorcio.
+          example: '202606'
+        start_date:
+          $ref: '#/components/schemas/Date'
+        end_date:
+          $ref: '#/components/schemas/Date'
+        due_date:
+          $ref: '#/components/schemas/Date'
+      required:
+      - code
+      - start_date
+      - end_date
+      - due_date
+    ConsorcioResponse:
+      type: object
+      description: Single consorcio response.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        cuit:
+          $ref: '#/components/schemas/CUIT'
+        razon_social:
+          type: string
+        domicilio:
+          type: string
+        admin_matricula:
+          oneOf:
+          - type: string
+            pattern: ^MAT-\d{3}-\d{5}$
+          - type: 'null'
+        fiscal_year_start:
+          type: integer
+        late_interest_rate:
+          $ref: '#/components/schemas/Percentage'
+        round_off_limit:
+          $ref: '#/components/schemas/Money'
+        status:
+          $ref: '#/components/schemas/ConsorcioStatus'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+    UfsResponse:
+      type: object
+      properties:
+        ufs:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnidadFuncional'
+    PropietarioResponse:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        tax_id:
+          $ref: '#/components/schemas/TaxId'
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        signature_hash:
+          type: string
+          nullable: true
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+    PropietarioListResponse:
+      type: object
+      properties:
+        propietarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/Propietario'
+    PeriodResponse:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        code:
+          $ref: '#/components/schemas/YYYYMM'
+        start_date:
+          $ref: '#/components/schemas/Date'
+        end_date:
+          $ref: '#/components/schemas/Date'
+        due_date:
+          $ref: '#/components/schemas/Date'
+        status:
+          $ref: '#/components/schemas/PeriodStatus'
+        closed_at:
+          oneOf:
+          - $ref: '#/components/schemas/Timestamp'
+          - type: 'null'
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        updated_at:
+          $ref: '#/components/schemas/Timestamp'
+    ExpenseType:
+      type: string
+      enum:
+      - ORDINARIA
+      - EXTRAORDINARIA
+    ApprovalStatus:
+      type: string
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+    ConceptGroup:
+      type: string
+      enum:
+      - SERVICIOS
+      - MANTENIMIENTO
+      - PERSONAL
+      - IMPUESTOS
+      - SEGUROS
+      - OTROS
+    ProviderType:
+      type: string
+      enum:
+      - INDIVIDUAL
+      - COMPANY
+    CreateExpenseRequest:
+      type: object
+      required:
+      - consorcio_id
+      - period_code
+      - category_id
+      - concept_id
+      - item
+      - provider_id
+      - cost
+      - expense_type
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+          description: The consorcio this expense belongs to.
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+        category_id:
+          $ref: '#/components/schemas/UUID'
+        concept_id:
+          $ref: '#/components/schemas/UUID'
+        item:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Human-readable description of the expense item.
+          example: Factura de luz enero
+        total_terms:
+          type: integer
+          minimum: 1
+          maximum: 120
+          default: 1
+          description: Number of installments (multi-term expense).
+        provider_id:
+          $ref: '#/components/schemas/UUID'
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+          description: Optional link to an invoice.
+        cost:
+          $ref: '#/components/schemas/Money'
+        expense_type:
+          $ref: '#/components/schemas/ExpenseType'
+    CreateConceptRequest:
+      type: object
+      required:
+      - name
+      - group
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Concept name (non-empty, trimmed on creation).
+          example: Luz
+        group:
+          $ref: '#/components/schemas/ConceptGroup'
+    CreateCategoryRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Category name (non-empty).
+          example: Servicios Públicos
+        default_concept_id:
+          $ref: '#/components/schemas/UUID'
+          description: Optional default concept for this category.
+    RegisterProviderRequest:
+      type: object
+      required:
+      - cuit
+      - name
+      - iva_condition
+      - provider_type
+      properties:
+        cuit:
+          type: string
+          minLength: 11
+          maxLength: 11
+          pattern: ^[0-9]{11}$
+          description: CUIT (11 digits, validated with checksum).
+          example: '30546782197'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Provider name or business name.
+          example: EDENOR S.A.
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        provider_type:
+          $ref: '#/components/schemas/ProviderType'
+        contact_email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Optional contact email.
+          example: facturas@edenor.com.ar
+        contact_phone:
+          type: string
+          maxLength: 50
+          description: Optional contact phone number.
+    UpdateProviderRequest:
+      type: object
+      description: 'Partial provider update. Only provided fields are changed.
+
+        Use `null` for `contact_email` or `contact_phone` to clear them.
+
+        '
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 300
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        provider_type:
+          $ref: '#/components/schemas/ProviderType'
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: 'null'
+          description: Set to a new email, or `null` to clear.
+        contact_phone:
+          oneOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          description: Set to a new phone, or `null` to clear.
+    ExpenseResponse:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - period_code
+      - category_id
+      - concept_id
+      - item
+      - term
+      - total_terms
+      - provider_id
+      - cost
+      - expense_type
+      - approval_status
+      - hash
+      - version
+      - created_at
+      - created_by
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          type: string
+          description: YYYYMM period code.
+        category_id:
+          $ref: '#/components/schemas/UUID'
+        concept_id:
+          $ref: '#/components/schemas/UUID'
+        item:
+          type: string
+        term:
+          type: integer
+          minimum: 1
+          description: Current installment number (1-indexed).
+        total_terms:
+          type: integer
+          minimum: 1
+        provider_id:
+          $ref: '#/components/schemas/UUID'
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+        cost:
+          $ref: '#/components/schemas/Money'
+        expense_type:
+          $ref: '#/components/schemas/ExpenseType'
+        approval_status:
+          $ref: '#/components/schemas/ApprovalStatus'
+        hash:
+          $ref: '#/components/schemas/Hash'
+          description: SHA-256 hash of this version (part of the append-only hash chain).
+        version:
+          type: integer
+          minimum: 0
+          description: Monotonically increasing version number.
+        created_at:
+          type: string
+          format: date-time
+          description: RFC 3339 creation timestamp.
+        created_by:
+          $ref: '#/components/schemas/UUID'
+        tombstone:
+          type: boolean
+          description: True if this version is a soft-delete tombstone.
+    ConceptResponse:
+      type: object
+      required:
+      - id
+      - name
+      - group
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+        group:
+          $ref: '#/components/schemas/ConceptGroup'
+    CategoryResponse:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+        default_concept_id:
+          $ref: '#/components/schemas/UUID'
+    ProviderResponse:
+      type: object
+      required:
+      - id
+      - cuit
+      - name
+      - iva_condition
+      - provider_type
+      - tombstone
+      - created_at
+      - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        cuit:
+          type: string
+          description: 11-digit CUIT.
+        name:
+          type: string
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
+        provider_type:
+          $ref: '#/components/schemas/ProviderType'
+        contact_email:
+          type: string
+          format: email
+        contact_phone:
+          type: string
+        tombstone:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    InvoiceLineRequest:
+      type: object
+      required:
+      - orden
+      - descripcion
+      - cantidad
+      - unidad_medida
+      - precio_unitario
+      - alicuota_iva
+      properties:
+        orden:
+          type: integer
+          minimum: 0
+          description: Display order of the line item.
+          example: 1
+        descripcion:
+          type: string
+          minLength: 1
+          description: Description of the item/service.
+          example: Expensas comunes junio 2026
+        cantidad:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Quantity (non-negative).
+          example: 1.0
+        unidad_medida:
+          type: string
+          description: Unit of measure (e.g. "unidades", "horas").
+          example: unidades
+        precio_unitario:
+          $ref: '#/components/schemas/Money'
+          description: Unit price (non-negative).
+        alicuota_iva:
+          $ref: '#/components/schemas/IvaRate'
+          description: IVA rate applied to this line.
+    TaxLineRequest:
+      type: object
+      required:
+      - concepto
+      - importe
+      properties:
+        concepto:
+          type: string
+          minLength: 1
+          description: Tax concept name (e.g. "IIBB", "Tasa Municipal").
+          example: IIBB
+        importe:
+          $ref: '#/components/schemas/Money'
+          description: Tax amount (non-negative).
+    InvoiceType:
+      type: string
+      enum:
+      - '001'
+      - '006'
+      - '011'
+      - '051'
+      description: 'ARCA invoice type code (RG 4290/2018):
+
+        - `001` — Factura A (RI → RI)
+
+        - `006` — Factura B (RI → CF/Exento/Mono)
+
+        - `011` — Factura C (Any → CF/Exento)
+
+        - `051` — Factura A con leyenda
+
+        '
+    IvaRate:
+      type: string
+      enum:
+      - Veintiuno
+      - DiezComaCinco
+      - Veintisiete
+      - Cero
+      - Exento
+      description: 'ARCA IVA rate:
+
+        - `Veintiuno` — 21% general
+
+        - `DiezComaCinco` — 10.5% reduced
+
+        - `Veintisiete` — 27% services/utilities
+
+        - `Cero` — 0% (gravado a tasa cero)
+
+        - `Exento` — exempt
+
+        '
+    ReceiptType:
+      type: string
+      enum:
+      - 009
+      - '015'
+      description: 'ARCA receipt type code:
+
+        - `009` — Recibo B (RI/Mono/Exento)
+
+        - `015` — Recibo C (CF/Exento)
+
+        '
+    InvoiceStatus:
+      type: string
+      enum:
+      - Activa
+      - Anulada
+      description: Invoice lifecycle status. Anulada is immutable terminal state.
+    ReciboStatus:
+      type: string
+      enum:
+      - Activo
+      - Anulado
+      description: Recibo lifecycle status.
+    AdjustmentReason:
+      type: string
+      enum:
+      - Return
+      - Discount
+      - Cancellation
+      - Error
+      - PostBillingDiscount
+      - AdditionalCharge
+      - PriceAdjustment
+      - Interest
+      - Other
+      description: 'Reason for the adjustment:
+
+        - For **Nota de Crédito**: Return, Discount, Cancellation, Error, PostBillingDiscount
+
+        - For **Nota de Débito**: AdditionalCharge, PriceAdjustment, Interest, Other
+
+        '
+    InvoiceLine:
+      type: object
+      required:
+      - id
+      - invoice_id
+      - orden
+      - descripcion
+      - cantidad
+      - unidad_medida
+      - precio_unitario
+      - subtotal
+      - alicuota_iva
+      - importe_iva
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+        orden:
+          type: integer
+          minimum: 0
+        descripcion:
+          type: string
+        cantidad:
+          type: number
+          format: decimal
+        unidad_medida:
+          type: string
+        precio_unitario:
+          $ref: '#/components/schemas/Money'
+        subtotal:
+          $ref: '#/components/schemas/Money'
+          description: Computed as cantidad × precio_unitario.
+        alicuota_iva:
+          $ref: '#/components/schemas/IvaRate'
+        importe_iva:
+          $ref: '#/components/schemas/Money'
+          description: Computed as subtotal × IVA rate.
+    TaxLine:
+      type: object
+      required:
+      - concepto
+      - importe
+      properties:
+        concepto:
+          type: string
+          description: Tax concept name (e.g. "IIBB", "Tasa Municipal").
+        importe:
+          $ref: '#/components/schemas/Money'
+    Invoice:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - tipo_comprobante
+      - punto_venta
+      - numero_comprobante
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_condicion_iva
+      - emisor_inicio_actividades
+      - receptor_condicion_iva
+      - items
+      - neto_gravado_21
+      - iva_21
+      - neto_gravado_105
+      - iva_105
+      - neto_gravado_27
+      - iva_27
+      - neto_exento
+      - neto_no_gravado
+      - otros_impuestos
+      - importe_total
+      - iva_contenido
+      - qr_code
+      - adicionales_rg
+      - status
+      - hash
+      - version
+      - created_at
+      - created_by
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        tipo_comprobante:
+          $ref: '#/components/schemas/InvoiceType'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: ARCA point-of-sale number.
+        numero_comprobante:
+          type: integer
+          minimum: 1
+          description: Sequential comprobante number within the punto_venta.
+        cae:
+          type: string
+          minLength: 10
+          description: Código de Autorización Electrónico (alphanumeric).
+        cae_vencimiento:
+          type: string
+          format: date
+          description: CAE expiration date.
+        fecha_emision:
+          type: string
+          format: date
+          description: Invoice issuance date.
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+          description: Invoice due date (optional).
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          description: Emisor CUIT.
+        emisor_razon_social:
+          type: string
+        emisor_domicilio:
+          type: string
+        emisor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+        emisor_iibb:
+          type: string
+          nullable: true
+          description: Ingresos Brutos number (optional).
+        emisor_inicio_actividades:
+          type: string
+          format: date
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          nullable: true
+          description: Receptor CUIT (required for Factura A, optional for B/C).
+        receptor_razon_social:
+          type: string
+          nullable: true
+        receptor_domicilio:
+          type: string
+          nullable: true
+        receptor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
+        neto_gravado_21:
+          $ref: '#/components/schemas/Money'
+          description: Neto gravado at 21% (only in Factura A).
+        iva_21:
+          $ref: '#/components/schemas/Money'
+          description: IVA at 21%.
+        neto_gravado_105:
+          $ref: '#/components/schemas/Money'
+          description: Neto gravado at 10.5%.
+        iva_105:
+          $ref: '#/components/schemas/Money'
+          description: IVA at 10.5%.
+        neto_gravado_27:
+          $ref: '#/components/schemas/Money'
+          description: Neto gravado at 27%.
+        iva_27:
+          $ref: '#/components/schemas/Money'
+          description: IVA at 27%.
+        neto_exento:
+          $ref: '#/components/schemas/Money'
+          description: Exempt net amount.
+        neto_no_gravado:
+          $ref: '#/components/schemas/Money'
+          description: Non-taxed net amount.
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLine'
+          description: Other taxes (e.g. IIBB, municipal).
+        importe_total:
+          $ref: '#/components/schemas/Money'
+          description: 'Total invoice amount. Computed as sum of all IVA netos,
+
+            IVA amounts, exempt/non-gravado amounts, and otros_impuestos.
+
+            '
+        iva_contenido:
+          $ref: '#/components/schemas/Money'
+          description: 'IVA Contenido per RG 5614/2024 — always computed,
+
+            equals sum of all iva_* fields.
+
+            '
+        qr_code:
+          type: string
+          description: ARCA QR code data.
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional ARCA data as key-value pairs.
+        leyenda:
+          type: string
+          nullable: true
+          description: Optional legend text.
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        hash:
+          type: string
+          description: SHA-256 hash for immutable audit trail (P3).
+        version:
+          type: integer
+          minimum: 1
+          description: Version number incremented on each mutation.
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UUID'
+        tombstone:
+          type: boolean
+          description: Soft-delete marker.
+    NotaCredito:
+      type: object
+      required:
+      - invoice
+      - comprobante_asociado_tipo
+      - comprobante_asociado_punto_venta
+      - comprobante_asociado_numero
+      - motivo
+      properties:
+        invoice:
+          $ref: '#/components/schemas/Invoice'
+          description: The underlying invoice data for this NC.
+        comprobante_asociado_tipo:
+          $ref: '#/components/schemas/InvoiceType'
+          description: Invoice type of the referenced comprobante.
+        comprobante_asociado_punto_venta:
+          type: integer
+          description: Punto de venta of the referenced comprobante.
+        comprobante_asociado_numero:
+          type: integer
+          description: Comprobante number of the referenced invoice.
+        motivo:
+          $ref: '#/components/schemas/AdjustmentReason'
+          description: 'Reason for the credit note.
+
+            Must be one of: Return, Discount, Cancellation, Error, PostBillingDiscount.
+
+            '
+    NotaDebito:
+      type: object
+      required:
+      - invoice
+      - comprobante_asociado_tipo
+      - comprobante_asociado_punto_venta
+      - comprobante_asociado_numero
+      - motivo
+      properties:
+        invoice:
+          $ref: '#/components/schemas/Invoice'
+          description: The underlying invoice data for this ND.
+        comprobante_asociado_tipo:
+          $ref: '#/components/schemas/InvoiceType'
+        comprobante_asociado_punto_venta:
+          type: integer
+        comprobante_asociado_numero:
+          type: integer
+        motivo:
+          $ref: '#/components/schemas/AdjustmentReason'
+          description: 'Reason for the debit note.
+
+            Must be one of: AdditionalCharge, PriceAdjustment, Interest, Other.
+
+            '
+    Recibo:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - tipo_comprobante
+      - punto_venta
+      - numero_comprobante
+      - fecha_emision
+      - fecha_pago
+      - importe_pagado
+      - medio_pago
+      - status
+      - hash
+      - version
+      - created_at
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        tipo_comprobante:
+          $ref: '#/components/schemas/ReceiptType'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        numero_comprobante:
+          type: integer
+          minimum: 1
+        fecha_emision:
+          type: string
+          format: date
+        fecha_pago:
+          type: string
+          format: date
+          description: Date the payment was received.
+        importe_pagado:
+          $ref: '#/components/schemas/Money'
+          description: Amount paid (must be positive).
+        medio_pago:
+          type: string
+          minLength: 1
+          description: Payment method (e.g. "Transferencia", "Efectivo").
+        factura_asociada_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+          description: Associated invoice UUID.
+        liquidacion_ref:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+          description: Associated liquidación UUID.
+        status:
+          $ref: '#/components/schemas/ReciboStatus'
+        hash:
+          type: string
+          description: SHA-256 hash (P3 immutable audit).
+        version:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        tombstone:
+          type: boolean
+    CreateFacturaARequest:
+      type: object
+      required:
+      - consorcio_id
+      - punto_venta
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_inicio_actividades
+      - receptor_cuit
+      - receptor_razon_social
+      - receptor_domicilio
+      - items
+      - otros_impuestos
+      - adicionales_rg
+      - qr_code
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: ARCA point-of-sale number.
+        cae:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+          description: Código de Autorización Electrónico (alphanumeric, min 10 chars).
+        cae_vencimiento:
+          type: string
+          format: date
+          description: CAE expiration date. Must be >= fecha_emision.
+        fecha_emision:
+          type: string
+          format: date
+          description: Invoice emission date.
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+          description: Optional invoice due date.
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          description: Emisor CUIT (11 digits, valid checksum).
+        emisor_razon_social:
+          type: string
+          minLength: 1
+          description: Emisor legal name.
+        emisor_domicilio:
+          type: string
+          minLength: 1
+          description: Emisor fiscal address.
+        emisor_iibb:
+          type: string
+          nullable: true
+          description: Ingresos Brutos number (optional).
+        emisor_inicio_actividades:
+          type: string
+          format: date
+          description: Emisor start-of-activities date.
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          description: Receptor CUIT (mandatory for Factura A, always RI).
+        receptor_razon_social:
+          type: string
+          minLength: 1
+          description: Receptor legal name.
+        receptor_domicilio:
+          type: string
+          minLength: 1
+          description: Receptor fiscal address.
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLineRequest'
+          description: Invoice line items (at least one).
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLineRequest'
+          description: Other taxes (may be empty).
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional ARCA data as key-value pairs.
+          example:
+            rg: '4290'
+        leyenda:
+          type: string
+          nullable: true
+          description: Optional legend text.
+        qr_code:
+          type: string
+          description: ARCA QR code data (base64-encoded or URL).
+    CreateFacturaBRequest:
+      type: object
+      required:
+      - consorcio_id
+      - punto_venta
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_inicio_actividades
+      - receptor_condicion_iva
+      - items
+      - otros_impuestos
+      - adicionales_rg
+      - qr_code
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        cae:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+        cae_vencimiento:
+          type: string
+          format: date
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+        emisor_razon_social:
+          type: string
+          minLength: 1
+        emisor_domicilio:
+          type: string
+          minLength: 1
+        emisor_iibb:
+          type: string
+          nullable: true
+        emisor_inicio_actividades:
+          type: string
+          format: date
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          nullable: true
+          description: 'Receptor CUIT. Optional but required if importe_total >= $5,000
+
+            (RG 1415 AX II).
+
+            '
+        receptor_razon_social:
+          type: string
+          nullable: true
+        receptor_domicilio:
+          type: string
+          nullable: true
+        receptor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+          description: Must be CF, EXENTO, or MONOTRIBUTISTA (not RI).
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLineRequest'
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLineRequest'
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+        leyenda:
+          type: string
+          nullable: true
+        qr_code:
+          type: string
+    CreateFacturaCRequest:
+      type: object
+      required:
+      - consorcio_id
+      - punto_venta
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_condicion_iva
+      - emisor_inicio_actividades
+      - items
+      - otros_impuestos
+      - adicionales_rg
+      - qr_code
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        cae:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+        cae_vencimiento:
+          type: string
+          format: date
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+        emisor_razon_social:
+          type: string
+          minLength: 1
+        emisor_domicilio:
+          type: string
+          minLength: 1
+        emisor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+          description: Emisor IVA condition (for Factura C, any condition).
+        emisor_iibb:
+          type: string
+          nullable: true
+        emisor_inicio_actividades:
+          type: string
+          format: date
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          nullable: true
+          description: 'Receptor CUIT. Optional but required if importe_total >= $5,000.
+
+            '
+        receptor_razon_social:
+          type: string
+          nullable: true
+        receptor_domicilio:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLineRequest'
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLineRequest'
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+        leyenda:
+          type: string
+          nullable: true
+        qr_code:
+          type: string
+    CreateNotaCreditoRequest:
+      type: object
+      required:
+      - consorcio_id
+      - punto_venta
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_inicio_actividades
+      - receptor_condicion_iva
+      - items
+      - otros_impuestos
+      - adicionales_rg
+      - qr_code
+      - motivo
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: Must match the original invoice's punto_venta.
+        cae:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+        cae_vencimiento:
+          type: string
+          format: date
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+        emisor_razon_social:
+          type: string
+          minLength: 1
+        emisor_domicilio:
+          type: string
+          minLength: 1
+        emisor_iibb:
+          type: string
+          nullable: true
+        emisor_inicio_actividades:
+          type: string
+          format: date
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          nullable: true
+        receptor_razon_social:
+          type: string
+          nullable: true
+        receptor_domicilio:
+          type: string
+          nullable: true
+        receptor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLineRequest'
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLineRequest'
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+        leyenda:
+          type: string
+          nullable: true
+        qr_code:
+          type: string
+        motivo:
+          $ref: '#/components/schemas/AdjustmentReason'
+          description: 'Must be one of: Return, Discount, Cancellation, Error, PostBillingDiscount.
+
+            '
+    CreateNotaDebitoRequest:
+      type: object
+      required:
+      - consorcio_id
+      - punto_venta
+      - cae
+      - cae_vencimiento
+      - fecha_emision
+      - emisor_cuit
+      - emisor_razon_social
+      - emisor_domicilio
+      - emisor_inicio_actividades
+      - receptor_condicion_iva
+      - items
+      - otros_impuestos
+      - adicionales_rg
+      - qr_code
+      - motivo
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          description: Must match the original invoice's punto_venta.
+        cae:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9]+$
+        cae_vencimiento:
+          type: string
+          format: date
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        emisor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+        emisor_razon_social:
+          type: string
+          minLength: 1
+        emisor_domicilio:
+          type: string
+          minLength: 1
+        emisor_iibb:
+          type: string
+          nullable: true
+        emisor_inicio_actividades:
+          type: string
+          format: date
+        receptor_cuit:
+          type: string
+          pattern: ^[0-9]{11}$
+          nullable: true
+        receptor_razon_social:
+          type: string
+          nullable: true
+        receptor_domicilio:
+          type: string
+          nullable: true
+        receptor_condicion_iva:
+          $ref: '#/components/schemas/IvaCondition'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLineRequest'
+        otros_impuestos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxLineRequest'
+        adicionales_rg:
+          type: object
+          additionalProperties:
+            type: string
+        leyenda:
+          type: string
+          nullable: true
+        qr_code:
+          type: string
+        motivo:
+          $ref: '#/components/schemas/AdjustmentReason'
+          description: 'Must be one of: AdditionalCharge, PriceAdjustment, Interest, Other.
+
+            '
+    CreateReciboRequest:
+      type: object
+      required:
+      - consorcio_id
+      - tipo_comprobante
+      - punto_venta
+      - fecha_emision
+      - fecha_pago
+      - importe_pagado
+      - medio_pago
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        tipo_comprobante:
+          $ref: '#/components/schemas/ReceiptType'
+        punto_venta:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        fecha_emision:
+          type: string
+          format: date
+          description: Receipt emission date.
+        fecha_pago:
+          type: string
+          format: date
+          description: Date the payment was received (must not be in the future).
+        importe_pagado:
+          $ref: '#/components/schemas/Money'
+          description: Amount paid (must be > 0).
+        medio_pago:
+          type: string
+          minLength: 1
+          description: Payment method (e.g. "Transferencia bancaria", "Efectivo").
+          example: Transferencia bancaria
+        factura_asociada_id:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+          description: 'Associated invoice UUID.
+
+            At least one of factura_asociada_id or liquidacion_ref must be provided.
+
+            '
+        liquidacion_ref:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+          description: 'Associated liquidación UUID.
+
+            At least one of factura_asociada_id or liquidacion_ref must be provided.
+
+            '
+    InvoiceResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Invoice'
+    NotaCreditoResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/NotaCredito'
+    NotaDebitoResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/NotaDebito'
+    ReciboResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Recibo'
+    LiquidacionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - ISSUED
+      - SETTLED
+      - CANCELLED
+      description: 'Liquidación lifecycle:
+
+        - `DRAFT` — editable, can be recalculated
+
+        - `ISSUED` — immutable, ready for billing
+
+        - `SETTLED` — fully paid
+
+        - `CANCELLED` — voided
+
+        Valid transitions: DRAFT → ISSUED | CANCELLED; ISSUED → SETTLED | CANCELLED.
+
+        '
+    DistributionType:
+      type: string
+      enum:
+      - PERCENTAGE
+      - EQUAL
+      - INDIVIDUAL
+      description: 'How an expense is distributed across units:
+
+        - `PERCENTAGE` — by unit''s prorrateo percentage (default)
+
+        - `EQUAL` — split equally across non-exempt units
+
+        - `INDIVIDUAL` — charged to specific unit(s) only
+
+        '
+    CertStatus:
+      type: string
+      enum:
+      - VIGENTE
+      - VENCIDO
+      - EJECUTADO
+      description: 'Certificado de Deuda lifecycle:
+
+        - `VIGENTE` — currently valid
+
+        - `VENCIDO` — past expiration date
+
+        - `EJECUTADO` — presented for judicial enforcement
+
+        '
+    ExpenseAllocation:
+      type: object
+      required:
+      - expense_id
+      - expense_group
+      - description
+      - total_cost
+      - distribution_type
+      - unit_percentage_applied
+      - unit_share
+      properties:
+        expense_id:
+          $ref: '#/components/schemas/UUID'
+          description: The expense record ID.
+        expense_group:
+          type: string
+          description: Group the expense belongs to (e.g. "Servicios", "Mantenimiento").
+        description:
+          type: string
+          description: Expense description.
+        total_cost:
+          $ref: '#/components/schemas/Money'
+          description: Total cost of this expense before distribution.
+        distribution_type:
+          $ref: '#/components/schemas/DistributionType'
+          description: How this expense was distributed.
+        unit_percentage_applied:
+          $ref: '#/components/schemas/Percentage'
+          description: 'The percentage factor applied to compute this unit''s share.
+
+            For PERCENTAGE distribution: the unit''s prorrateo.
+
+            For EQUAL: 100/N.
+
+            For INDIVIDUAL: 100% (or 0% if not charged).
+
+            '
+        unit_share:
+          $ref: '#/components/schemas/Money'
+          description: 'This unit''s share of the expense.
+
+            Computed as total_cost × (unit_percentage_applied / 100).
+
+            '
+    PeriodBreakdownItem:
+      type: object
+      required:
+      - period_code
+      - amount
+      properties:
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+          description: Fiscal period this debt component belongs to.
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: Debt amount for this period within the certificado.
+    Liquidacion:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - period_code
+      - unit_id
+      - previous_balance
+      - expenses_breakdown
+      - total_unit_expenses
+      - compensatory_interest
+      - punitive_interest
+      - round_off
+      - total_debt
+      - payments_applied
+      - current_balance
+      - liquidacion_number
+      - qr_code
+      - status
+      - hash
+      - version
+      - generated_at
+      - created_at
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+          description: Fiscal period (e.g. 202606).
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+          description: Unidad funcional this liquidación applies to.
+        previous_balance:
+          $ref: '#/components/schemas/Money'
+          description: 'Debt carried over from the prior period.
+
+            I17/I18: latest ISSUED liquidación balance for this unit before this period.
+
+            '
+        expenses_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseAllocation'
+          description: Per-expense allocation breakdown.
+        total_unit_expenses:
+          $ref: '#/components/schemas/Money'
+          description: 'Sum of all expenses_breakdown[].unit_share (I1 invariant).
+
+            '
+        compensatory_interest:
+          $ref: '#/components/schemas/Money'
+          description: 'Interest awarded to the consorcio for late payment (I9).
+
+            Computed as total_unit_expenses × (compensatory_rate / 100).
+
+            '
+        punitive_interest:
+          $ref: '#/components/schemas/Money'
+          description: 'Punitive interest on existing debt (I8).
+
+            Computed as previous_balance × (monthly_punitive_rate / 100).
+
+            Only applied when previous_balance > 0.
+
+            '
+        round_off:
+          $ref: '#/components/schemas/Money'
+          description: 'Rounding adjustment (± small amount, signed) to achieve whole cents.
+
+            Must be within configurable limits.
+
+            '
+        total_debt:
+          $ref: '#/components/schemas/Money'
+          description: 'Total debt for this period (I5 invariant):
+
+            previous_balance + total_unit_expenses + compensatory_interest + punitive_interest + round_off
+
+            '
+        payments_applied:
+          $ref: '#/components/schemas/Money'
+          description: Payments received against this liquidación.
+        current_balance:
+          $ref: '#/components/schemas/Money'
+          description: 'Outstanding balance (I6 invariant):
+
+            total_debt - payments_applied
+
+            '
+        liquidacion_number:
+          type: string
+          description: Unique liquidación number (e.g. "LC-202606-001").
+        qr_code:
+          type: string
+          description: QR code for payment reference.
+        status:
+          $ref: '#/components/schemas/LiquidacionStatus'
+        hash:
+          type: string
+          description: SHA-256 hash for immutable audit (P3).
+        version:
+          type: integer
+          minimum: 1
+          description: Version number incremented on each recalculation.
+        generated_at:
+          type: string
+          format: date-time
+          description: When this version was generated.
+        issued_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the liquidación was issued (populated on DRAFT→ISSUED).
+        created_at:
+          type: string
+          format: date-time
+        tombstone:
+          type: boolean
+          description: Soft-delete marker.
+    CertificadoDeuda:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - unit_id
+      - total_debt
+      - period_breakdown
+      - issue_date
+      - expires_at
+      - administrator_signature
+      - status
+      - is_executive_title
+      - source_liquidacion_hashes
+      - hash
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+          description: Unidad funcional that owes the debt.
+        total_debt:
+          $ref: '#/components/schemas/Money'
+          description: Total certified debt amount.
+        period_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/PeriodBreakdownItem'
+          description: Period-by-period breakdown of the total debt.
+        issue_date:
+          type: string
+          format: date
+          description: Date the certificado was issued.
+        expires_at:
+          type: string
+          format: date
+          description: 'Expiration date. After this date the certificado becomes VENCIDO.
+
+            Must be issued within 3 business days of the underlying liquidación.
+
+            '
+        administrator_signature:
+          type: string
+          description: 'Administrator''s digital signature.
+
+            When non-empty, the certificado becomes an executive title (CCC Art. 2048 ¶4).
+
+            '
+        consejo_approval:
+          type: string
+          nullable: true
+          description: Optional consejo de propietarios approval reference.
+        status:
+          $ref: '#/components/schemas/CertStatus'
+        is_executive_title:
+          type: boolean
+          description: 'True when the certificado bears the administrator''s signature
+
+            (and consejo approval if consejo exists), making it legally
+
+            enforceable under CCC Art. 2048 ¶4 (I14 invariant).
+
+            '
+        source_liquidacion_hashes:
+          type: array
+          items:
+            type: string
+          description: SHA-256 hashes of the source liquidaciones for auditability.
+        hash:
+          type: string
+          description: SHA-256 hash of this certificado for tamper-evidence.
+    InterestTable:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - period_code
+      - annual_percentage
+      - created_at
+      - created_by
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+          description: Period from which this rate is effective.
+        annual_percentage:
+          $ref: '#/components/schemas/Percentage'
+          description: 'Annual punitive interest rate. Monthly rate = annual_percentage / 12.
+
+            '
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UUID'
+    CompensatoryInterest:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - period_code
+      - unit_id
+      - percentage
+      - description
+      - created_at
+      - created_by
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+        percentage:
+          $ref: '#/components/schemas/Percentage'
+          description: 'Compensatory interest rate for this unit.
+
+            Applied as total_unit_expenses × (percentage / 100).
+
+            '
+        description:
+          type: string
+          description: Reason for the compensatory interest.
+        comments:
+          type: string
+          nullable: true
+          description: Optional notes.
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UUID'
+    GenerateLiquidacionRequest:
+      type: object
+      required:
+      - period_code
+      - unit_id
+      properties:
+        period_code:
+          type: string
+          pattern: ^[0-9]{6}$
+          description: Fiscal period in YYYYMM format (e.g. "202606").
+          example: '202606'
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+          description: Unidad funcional to generate the liquidación for.
+    GenerateBatchLiquidacionRequest:
+      type: object
+      required:
+      - period_code
+      properties:
+        period_code:
+          type: string
+          pattern: ^[0-9]{6}$
+          description: 'Fiscal period in YYYYMM format.
+
+            Liquidaciones will be generated for ALL active unidades funcionales
+
+            in the consorcio.
+
+            '
+          example: '202606'
+    GenerateCertificadoRequest:
+      type: object
+      required:
+      - unit_id
+      - liquidacion_id
+      - administrator_signature
+      properties:
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+          description: Unidad funcional the certificado is for.
+        liquidacion_id:
+          $ref: '#/components/schemas/UUID'
+          description: 'Source liquidación UUID.
+
+            The liquidación must be in ISSUED status.
+
+            '
+        administrator_signature:
+          type: string
+          minLength: 1
+          description: 'Administrator''s digital signature.
+
+            Required for the certificado to be an executive title under CCC Art. 2048 ¶4.
+
+            '
+        consejo_approval:
+          type: string
+          nullable: true
+          description: Optional approval reference from the consejo de propietarios.
+    SignCertificadoRequest:
+      type: object
+      required:
+      - administrator_signature
+      properties:
+        administrator_signature:
+          type: string
+          description: 'Administrator''s digital signature.
+
+            If non-empty, the certificado becomes an executive title.
+
+            If empty, the certificado loses its executive title status.
+
+            '
+    GenerateLiquidacionResponse:
+      type: object
+      required:
+      - liquidacion
+      properties:
+        liquidacion:
+          $ref: '#/components/schemas/Liquidacion'
+    GenerateBatchLiquidacionResponse:
+      type: object
+      required:
+      - liquidaciones
+      - count
+      properties:
+        liquidaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Liquidacion'
+        count:
+          type: integer
+          minimum: 0
+          description: Number of liquidaciones generated.
+    ListLiquidacionesResponse:
+      type: object
+      required:
+      - liquidaciones
+      - count
+      properties:
+        liquidaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Liquidacion'
+        count:
+          type: integer
+          minimum: 0
+          description: Total number of liquidaciones matching the filters.
+    GetLiquidacionResponse:
+      type: object
+      required:
+      - liquidacion
+      properties:
+        liquidacion:
+          $ref: '#/components/schemas/Liquidacion'
+    IssueLiquidacionResponse:
+      type: object
+      required:
+      - liquidacion
+      properties:
+        liquidacion:
+          $ref: '#/components/schemas/Liquidacion'
+          description: Liquidación with status changed to ISSUED.
+    GenerateCertificadoResponse:
+      type: object
+      required:
+      - certificado
+      properties:
+        certificado:
+          $ref: '#/components/schemas/CertificadoDeuda'
+    GetCertificadoResponse:
+      type: object
+      required:
+      - certificado
+      properties:
+        certificado:
+          $ref: '#/components/schemas/CertificadoDeuda'
+    ListCertificadosResponse:
+      type: object
+      required:
+      - certificados
+      - count
+      properties:
+        certificados:
+          type: array
+          items:
+            $ref: '#/components/schemas/CertificadoDeuda'
+        count:
+          type: integer
+          minimum: 0
+          description: Number of certificados returned.
+    SignCertificadoResponse:
+      type: object
+      required:
+      - certificado
+      properties:
+        certificado:
+          $ref: '#/components/schemas/CertificadoDeuda'
+          description: Certificado with updated signature and executive title status.
+    PaymentMethod:
+      type: string
+      enum:
+      - CASH
+      - TRANSFER
+      - DEPOSIT
+      - MERCADOPAGO
+      - OTHER
+      description: 'Payment method:
+
+        - `CASH` — Cash (may or may not have a physical voucher).
+
+        - `TRANSFER` — Bank / electronic transfer.
+
+        - `DEPOSIT` — Bank deposit.
+
+        - `MERCADOPAGO` — MercadoPago (Phase 2 integration).
+
+        - `OTHER` — Any other method not listed.
+
+        '
+    PaymentStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - REVERSED
+      description: 'Lifecycle status. ACTIVE payments are valid and applied to debt.
+
+        REVERSED payments are compensating entries (original stays ACTIVE).
+
+        '
+    CreatePaymentRequest:
+      type: object
+      required:
+      - consorcio_id
+      - unit_id
+      - period_code
+      - payment_date
+      - amount
+      - method
+      properties:
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+          description: UUID of the UnidadFuncional making the payment.
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+        payment_date:
+          $ref: '#/components/schemas/Date'
+          description: Date the payment was made (must not be in the future).
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: Must be greater than 0.00 (I1).
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        has_voucher:
+          type: boolean
+          default: false
+          description: Whether a physical/electronic voucher was provided.
+        voucher_ref:
+          type: string
+          maxLength: 100
+          description: Voucher reference number or identifier.
+          example: COMP-001
+        notes:
+          type: string
+          maxLength: 2000
+          description: Free-text notes.
+    ReversePaymentRequest:
+      type: object
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: 'Reason for reversing the payment. Stored in the reversal''s notes
+
+            as "Reversal of {original_id}: {reason}".
+
+            '
+          example: Error en monto
+    PaymentResponse:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - unit_id
+      - period_code
+      - payment_date
+      - amount
+      - method
+      - has_voucher
+      - status
+      - hash
+      - version
+      - created_at
+      - created_by
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        unit_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          type: string
+          description: YYYYMM period code.
+        payment_date:
+          $ref: '#/components/schemas/Date'
+        amount:
+          $ref: '#/components/schemas/Money'
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        has_voucher:
+          type: boolean
+        voucher_ref:
+          type: string
+          description: Voucher reference, if provided.
+        recibo_id:
+          $ref: '#/components/schemas/UUID'
+          description: Auto-generated Recibo B/C linked to this payment.
+        notes:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        reversed_from:
+          $ref: '#/components/schemas/UUID'
+          description: If this is a reversal, the ID of the original payment.
+        hash:
+          $ref: '#/components/schemas/Hash'
+          description: SHA-256 hash of core immutable fields.
+        version:
+          type: integer
+          minimum: 1
+          description: Monotonic version counter.
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        created_by:
+          $ref: '#/components/schemas/UUID'
+        tombstone:
+          type: boolean
+    UnitBalanceResponse:
+      type: object
+      required:
+      - total_debt
+      - total_paid
+      - outstanding
+      - overpayment
+      properties:
+        total_debt:
+          $ref: '#/components/schemas/Money'
+          description: Total debt across all periods for this unit.
+        total_paid:
+          $ref: '#/components/schemas/Money'
+          description: Sum of all ACTIVE payments made by this unit.
+        outstanding:
+          $ref: '#/components/schemas/Money'
+          description: total_debt - total_paid (negative means overpayment).
+        overpayment:
+          $ref: '#/components/schemas/Money'
+          description: Absolute overpayment amount when outstanding is negative, otherwise zero.
+    PaymentHistoryEntry:
+      type: object
+      required:
+      - payment_id
+      - period_code
+      - amount
+      - method
+      - payment_date
+      - status
+      - no_voucher_warning
+      properties:
+        payment_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          type: string
+          description: YYYYMM period the payment was applied to.
+        amount:
+          $ref: '#/components/schemas/Money'
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        payment_date:
+          $ref: '#/components/schemas/Date'
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        reversed_from:
+          $ref: '#/components/schemas/UUID'
+          description: If a reversal, points to the original payment.
+        reversal_reason:
+          type: string
+          description: Reason for reversal (only for REVERSED entries).
+        no_voucher_warning:
+          type: boolean
+          description: True when a CASH payment has no voucher (I4).
+    FlowDirection:
+      type: string
+      enum:
+      - INCOME
+      - OUTPUT
+      description: '- `INCOME` — Money received by the consorcio.
+
+        - `OUTPUT` — Money paid by the consorcio.
+
+        '
+    FlowSubType:
+      type: string
+      enum:
+      - INCOME_RENT
+      - INCOME_ON_DEMAND_SERVICE
+      - INCOME_INSURANCE
+      - INCOME_OTHER
+      - OUTPUT_SALARY_TEMP
+      - OUTPUT_INVESTMENT_TEMP
+      - OUTPUT_LEGAL_TEMP
+      - OUTPUT_OTHER
+      description: 'Classification of the cash movement. Prefix indicates expected direction.
+
+
+        **Permanent incomes:**
+
+        - `INCOME_RENT` — Rental income.
+
+        - `INCOME_ON_DEMAND_SERVICE` — On-demand services.
+
+        - `INCOME_INSURANCE` — Insurance reimbursements.
+
+        - `INCOME_OTHER` — Other income.
+
+
+        **Temporary outputs (Phase 1 bridge, will migrate to Phase 2):**
+
+        - `OUTPUT_SALARY_TEMP` — Salary payments (→ Salary module).
+
+        - `OUTPUT_INVESTMENT_TEMP` — Investments (→ Investment module).
+
+        - `OUTPUT_LEGAL_TEMP` — Legal expenses (→ Legal module).
+
+        - `OUTPUT_OTHER` — Other outputs.
+
+        '
+    IncomeOutputStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - CANCELLED
+      description: 'Lifecycle status. All entries start as ACTIVE.
+
+        CANCELLED entries are excluded from financial summaries by default.
+
+        '
+    CreateEntryRequest:
+      type: object
+      required:
+      - period_code
+      - direction
+      - sub_type
+      - date
+      - amount
+      - description
+      properties:
+        period_code:
+          $ref: '#/components/schemas/YYYYMM'
+        direction:
+          $ref: '#/components/schemas/FlowDirection'
+          description: Must match the sub_type prefix.
+        sub_type:
+          $ref: '#/components/schemas/FlowSubType'
+        date:
+          $ref: '#/components/schemas/Date'
+          description: Date of the cash movement (must be within period range).
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: Always positive; sign is determined by direction (I1).
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Human-readable description (non-empty).
+          example: Alquiler SUM marzo
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+          description: Optional if present in JWT token.
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+          description: Optional link to an invoice.
+        recibo_id:
+          $ref: '#/components/schemas/UUID'
+          description: Optional link to a receipt.
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          description: Optional tags for filtering/migration tracking.
+    IncomeOutputUpdate:
+      type: object
+      description: 'Partial update. Only provided fields are changed. Direction is immutable
+
+        (not a field on this struct). An empty update (all fields omitted) is a no-op.
+
+        '
+      properties:
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: New amount (must be > 0.00 if provided).
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        date:
+          $ref: '#/components/schemas/Date'
+        invoice_id:
+          oneOf:
+          - $ref: '#/components/schemas/UUID'
+          - type: 'null'
+          description: Set to a new invoice ID, or `null` to unlink.
+        recibo_id:
+          oneOf:
+          - $ref: '#/components/schemas/UUID'
+          - type: 'null'
+          description: Set to a new recibo ID, or `null` to unlink.
+        tags:
+          type: array
+          items:
+            type: string
+        sub_type:
+          $ref: '#/components/schemas/FlowSubType'
+          description: Must match the entry's direction.
+    IncomeOutputResponse:
+      type: object
+      required:
+      - id
+      - consorcio_id
+      - period_code
+      - direction
+      - sub_type
+      - date
+      - amount
+      - description
+      - tags
+      - status
+      - hash
+      - version
+      - created_at
+      - created_by
+      - tombstone
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        consorcio_id:
+          $ref: '#/components/schemas/UUID'
+        period_code:
+          type: string
+          description: YYYYMM period code.
+        direction:
+          $ref: '#/components/schemas/FlowDirection'
+        sub_type:
+          $ref: '#/components/schemas/FlowSubType'
+        date:
+          $ref: '#/components/schemas/Date'
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: Always positive; sign is determined by direction.
+        description:
+          type: string
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+        recibo_id:
+          $ref: '#/components/schemas/UUID'
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/IncomeOutputStatus'
+        hash:
+          $ref: '#/components/schemas/Hash'
+          description: SHA-256 hash of this version (append-only hash chain).
+        version:
+          type: integer
+          minimum: 1
+          description: Monotonically increasing version number.
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        created_by:
+          $ref: '#/components/schemas/UUID'
+        tombstone:
+          type: boolean
+          description: True if this version is a cancellation tombstone.
+    FinancialSummary:
+      type: object
+      required:
+      - total_income
+      - total_output
+      - net_flow
+      properties:
+        total_income:
+          $ref: '#/components/schemas/Money'
+          description: Total income across the selected scope (ACTIVE only).
+        total_output:
+          $ref: '#/components/schemas/Money'
+          description: Total output across the selected scope (ACTIVE only).
+        net_flow:
+          $ref: '#/components/schemas/Money'
+          description: total_income - total_output.
+        opening_balance:
+          $ref: '#/components/schemas/Money'
+          description: Balance carried forward from the previous period (cross-period only).
+        closing_balance:
+          $ref: '#/components/schemas/Money'
+          description: opening_balance + net_flow (cross-period only).
+    LoginRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Username for authentication.
+          example: admin
+        password:
+          type: string
+          minLength: 1
+          format: password
+          description: Password (not logged).
+    LoginResponse:
+      type: object
+      required:
+      - token
+      - user
+      properties:
+        token:
+          type: string
+          description: JWT Bearer token.
+        user:
+          $ref: '#/components/schemas/UserInfo'
+    UserInfo:
+      type: object
+      required:
+      - id
+      - username
+      - role
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        username:
+          type: string
+          description: Authenticated username.
+        role:
+          type: string
+          description: User role (ADMIN or ACCOUNTANT).
+    MeResponse:
+      type: object
+      required:
+      - user
+      properties:
+        user:
+          $ref: '#/components/schemas/UserInfo'
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - dependencies
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          description: Overall health status.
+        dependencies:
+          $ref: '#/components/schemas/HealthDependencies'
+    HealthDependencies:
+      type: object
+      required:
+      - postgres
+      - redis
+      - nats
+      properties:
+        postgres:
+          type: string
+          enum:
+          - ok
+          - unhealthy
+          description: PostgreSQL connection status.
+        redis:
+          type: string
+          enum:
+          - ok
+          - unhealthy
+          description: Redis connection status.
+        nats:
+          type: string
+          enum:
+          - ok
+          - unhealthy
+          description: NATS connection status.
+  responses:
+    "400":
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "401":
+      description: Unauthorized - Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "403":
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "404":
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "409":
+      description: Conflict - Duplicate or state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "422":
+      description: Unprocessable Entity - Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    "500":
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflict - Duplicate or state conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BusinessRuleViolation:
+      description: Unprocessable Entity - Business rule violation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
