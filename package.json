@@ -2,6 +2,8 @@
   "name": "cesar-web",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0",
+  "description": "React/Vite SPA for Argentine consorcio management. Consumes the CESAR REST API via type-safe TanStack Query hooks.",
   "type": "module",
   "scripts": {
     "dev": "vite",
