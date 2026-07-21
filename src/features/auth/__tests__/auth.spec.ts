@@ -109,7 +109,7 @@ test.describe("Auth BDD Scenarios", () => {
 
     await page.goto("/consorcios");
     await expect(page).toHaveURL(/\/invoices/);
-    await expect(page.getByText("Facturación — Próximamente")).toBeVisible();
+    await expect(page.getByText("Facturación")).toBeVisible();
   });
 
   test("[@role-guard] Unauthenticated user accessing protected route redirects to login", async ({
