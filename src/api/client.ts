@@ -2,10 +2,7 @@ import axios from "axios";
 import { v7 as uuidv7 } from "uuid";
 
 const getBaseUrl = () => {
-  if (typeof process !== "undefined" && process.env?.VITE_API_URL) {
-    return process.env.VITE_API_URL;
-  }
-  return "http://localhost:3000/api/v1";
+  return import.meta.env.VITE_API_URL ?? "http://localhost:3000/api/v1";
 };
 
 const baseClient = axios.create({
