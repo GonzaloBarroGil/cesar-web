@@ -78,7 +78,7 @@ export const loginResponseSchema = z.object({
     username: z.string(),
     role: z.enum(["ADMIN", "ACCOUNTANT"]),
     consorcio_id: uuidSchema.nullable().optional(),
-    nombre_completo: z.string(),
+    nombre_completo: z.string().optional(),
   }),
 });
 
