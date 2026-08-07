@@ -3163,6 +3163,8 @@ components:
             description: CABA Ley 941 administrator matrícula (format `MAT-NNN-NNNNN`).
             example: MAT-001-12345
           - type: 'null'
+        iva_condition:
+          $ref: '#/components/schemas/IvaCondition'
         fiscal_year_start:
           type: integer
           minimum: 1
@@ -3184,6 +3186,7 @@ components:
       - cuit
       - razon_social
       - domicilio
+      - iva_condition
       - fiscal_year_start
       - late_interest_rate
       - round_off_limit
@@ -3378,23 +3381,50 @@ components:
 
             '
           example: MAT-001-12345
+        iva_condition:
+          type: string
+          enum: [RI, EXENTO, MONOTRIBUTISTA, CF, NO_RESPONSABLE]
+          default: "RI"
+          description: 'IVA condition of the consorcio. Defaults to `RI` (Responsable Inscripto).
+
+            - `RI` — Responsable Inscripto
+
+            - `EXENTO` — Exento
+
+            - `MONOTRIBUTISTA` — Monotributista
+
+            - `CF` — Consumidor Final
+
+            - `NO_RESPONSABLE` — No Responsable
+
+            '
+          example: "RI"
         fiscal_year_start:
           type: integer
           minimum: 1
           maximum: 12
-          description: Month (1–12) on which the fiscal year begins.
+          default: 1
+          description: Month (1–12) on which the fiscal year begins. Defaults to `1` (January).
           example: 1
         late_interest_rate:
           type: string
-          description: Late-payment interest rate as a decimal percentage (0.00–100.00).
-          example: '3.50'
+          default: "0"
+          description: 'Late-payment annual interest rate as a decimal percentage (0.00–100.00).
+
+            Defaults to `"0"` (no interest). Uses Banco Nación tasa activa as reference.
+
+            '
+          example: "60.00"
         round_off_limit:
           type: string
+          default: "0.50"
           description: 'Maximum rounding difference allowed when distributing expenses.
 
             Must be non-negative.  E.g. `"0.50"` means rounding differences
 
             up to 50 cents are absorbed without further proration.
+
+            Defaults to `"0.50"`.
 
             '
           example: '0.50'
@@ -3402,9 +3432,6 @@ components:
       - cuit
       - razon_social
       - domicilio
-      - fiscal_year_start
-      - late_interest_rate
-      - round_off_limit
     UpdateConsorcioRequest:
       type: object
       description: 'Partial update of consorcio fields.  Every field is optional;

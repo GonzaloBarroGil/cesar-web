@@ -6,6 +6,9 @@ export interface ConsorcioData {
   matricula_caba: string;
   domicilio: string;
   iva_condition: string;
+  fiscal_year_start: number;
+  late_interest_rate: string;
+  round_off_limit: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -282,6 +285,9 @@ export const consorcioTorreNorte: ConsorcioData = {
   matricula_caba: "MAT-2024-001234",
   domicilio: "Av. Corrientes 4500, Piso 12, CABA",
   iva_condition: "RI",
+  fiscal_year_start: 1,
+  late_interest_rate: "60.00",
+  round_off_limit: "0.50",
   status: "ACTIVE",
   created_at: "2026-01-15T10:00:00Z",
   updated_at: "2026-06-20T14:30:00Z",

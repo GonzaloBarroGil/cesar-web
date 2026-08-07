@@ -10,6 +10,7 @@ Authentication via Bearer JWT with role-based access (ADMIN, ACCOUNTANT).
 import type { Uuid } from './uuid';
 import type { Cuit } from './cuit';
 import type { ConsorcioAdminMatricula } from './consorcioAdminMatricula';
+import type { IvaCondition } from './ivaCondition';
 import type { Percentage } from './percentage';
 import type { Money } from './money';
 import type { ConsorcioStatus } from './consorcioStatus';
@@ -35,6 +36,7 @@ export interface Consorcio {
    */
   domicilio: string;
   admin_matricula?: ConsorcioAdminMatricula;
+  iva_condition: IvaCondition;
   /**
    * Month (1–12) on which the fiscal year begins.
    * @minimum 1

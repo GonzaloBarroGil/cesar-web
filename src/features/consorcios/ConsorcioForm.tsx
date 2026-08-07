@@ -21,6 +21,9 @@ interface FormData {
   matricula_caba: string;
   domicilio: string;
   iva_condition: string;
+  fiscal_year_start: number;
+  late_interest_rate: string;
+  round_off_limit: string;
 }
 
 function ConsorcioForm({ initialData, onSubmit, isSubmitting, error }: ConsorcioFormProps) {
@@ -31,6 +34,9 @@ function ConsorcioForm({ initialData, onSubmit, isSubmitting, error }: Consorcio
     matricula_caba: initialData?.matricula_caba ?? "",
     domicilio: initialData?.domicilio ?? "",
     iva_condition: initialData?.iva_condition ?? "RI",
+    fiscal_year_start: initialData?.fiscal_year_start ?? 1,
+    late_interest_rate: initialData?.late_interest_rate ?? "60.00",
+    round_off_limit: initialData?.round_off_limit ?? "0.50",
   });
 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -126,6 +132,39 @@ function ConsorcioForm({ initialData, onSubmit, isSubmitting, error }: Consorcio
           id="iva_condition"
           value={form.iva_condition}
           onChange={(v) => handleChange("iva_condition", v)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="fiscal_year_start">Inicio Ejercicio Fiscal (mes)</Label>
+          <Input
+            id="fiscal_year_start"
+            type="number"
+            min={1}
+            max={12}
+            value={String(form.fiscal_year_start)}
+            onChange={(e) => handleChange("fiscal_year_start", e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="late_interest_rate">Interés Punitorio Anual (%)</Label>
+          <Input
+            id="late_interest_rate"
+            value={form.late_interest_rate}
+            onChange={(e) => handleChange("late_interest_rate", e.target.value)}
+            placeholder="Ej: 60.00"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="round_off_limit">Límite de Redondeo ($)</Label>
+        <Input
+          id="round_off_limit"
+          value={form.round_off_limit}
+          onChange={(e) => handleChange("round_off_limit", e.target.value)}
+          placeholder="Ej: 0.50"
         />
       </div>
 

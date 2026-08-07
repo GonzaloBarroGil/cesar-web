@@ -3,6 +3,7 @@ import {
   useGetConsorcio,
   useUpdateConsorcio,
 } from "@/api/generated/consorcio/consorcio";
+import type { CreateConsorcioRequest } from "@/api/generated/models/createConsorcioRequest";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
@@ -34,10 +35,11 @@ function ConsorcioFormPage() {
           data: {
             cuit: formData.cuit,
             razon_social: formData.razon_social,
-            nombre_fantasia: formData.nombre_fantasia,
-            matricula_caba: formData.matricula_caba,
-            domicilio: formData.domicilio,
-            iva_condition: formData.iva_condition,
+            domicilio: formData.domicilio || undefined,
+            admin_matricula: formData.matricula_caba || undefined,
+            fiscal_year_start: formData.fiscal_year_start,
+            late_interest_rate: formData.late_interest_rate,
+            round_off_limit: formData.round_off_limit,
           } as never,
         },
         {
@@ -46,17 +48,19 @@ function ConsorcioFormPage() {
         },
       );
     } else {
+      const requestData: CreateConsorcioRequest = {
+        cuit: formData.cuit,
+        razon_social: formData.razon_social,
+        domicilio: formData.domicilio,
+        admin_matricula: formData.matricula_caba || undefined,
+        iva_condition: formData.iva_condition as CreateConsorcioRequest["iva_condition"],
+        fiscal_year_start: formData.fiscal_year_start,
+        late_interest_rate: formData.late_interest_rate,
+        round_off_limit: formData.round_off_limit,
+      };
+
       createConsorcio.mutate(
-        {
-          data: {
-            cuit: formData.cuit,
-            razon_social: formData.razon_social,
-            nombre_fantasia: formData.nombre_fantasia || undefined,
-            matricula_caba: formData.matricula_caba || undefined,
-            domicilio: formData.domicilio || undefined,
-            iva_condition: formData.iva_condition,
-          } as never,
-        },
+        { data: requestData },
         {
           onSuccess: (result) => navigate(`/consorcios/${(result as { id: string }).id}`),
           onError: (err: unknown) => {
@@ -96,6 +100,9 @@ function ConsorcioFormPage() {
         matricula_caba: existingConsorcio.admin_matricula ?? "",
         domicilio: existingConsorcio.domicilio ?? "",
         iva_condition: "RI",
+        fiscal_year_start: existingConsorcio.fiscal_year_start ?? 1,
+        late_interest_rate: String(existingConsorcio.late_interest_rate ?? "60.00"),
+        round_off_limit: String(existingConsorcio.round_off_limit ?? "0.50"),
         status: existingConsorcio.status ?? "ACTIVE",
         created_at: existingConsorcio.created_at ?? "",
         updated_at: existingConsorcio.updated_at ?? "",

@@ -7,6 +7,7 @@ Implements CCC Art. 2044-2057, ARCA RG 4290/2018, and CABA DI-1146/24.
 Authentication via Bearer JWT with role-based access (ADMIN, ACCOUNTANT).
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateConsorcioRequestIvaCondition } from './createConsorcioRequestIvaCondition';
 
 /**
  * Payload to create a new consorcio.
@@ -37,17 +38,28 @@ Format: `MAT-NNN-NNNNN`.  Optional; omit or set `null`.
    * @pattern ^MAT-\d{3}-\d{5}$
    */
   admin_matricula?: string | null;
+  /** IVA condition of the consorcio. Defaults to `RI` (Responsable Inscripto).
+- `RI` — Responsable Inscripto
+- `EXENTO` — Exento
+- `MONOTRIBUTISTA` — Monotributista
+- `CF` — Consumidor Final
+- `NO_RESPONSABLE` — No Responsable
+ */
+  iva_condition?: CreateConsorcioRequestIvaCondition;
   /**
-   * Month (1–12) on which the fiscal year begins.
+   * Month (1–12) on which the fiscal year begins. Defaults to `1` (January).
    * @minimum 1
    * @maximum 12
    */
-  fiscal_year_start: number;
-  /** Late-payment interest rate as a decimal percentage (0.00–100.00). */
-  late_interest_rate: string;
+  fiscal_year_start?: number;
+  /** Late-payment annual interest rate as a decimal percentage (0.00–100.00).
+Defaults to `"0"` (no interest). Uses Banco Nación tasa activa as reference.
+ */
+  late_interest_rate?: string;
   /** Maximum rounding difference allowed when distributing expenses.
 Must be non-negative.  E.g. `"0.50"` means rounding differences
 up to 50 cents are absorbed without further proration.
+Defaults to `"0.50"`.
  */
-  round_off_limit: string;
+  round_off_limit?: string;
 }

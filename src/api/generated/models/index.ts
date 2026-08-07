@@ -29,6 +29,7 @@ export * from './consorcioStatus';
 export * from './createCategoryRequest';
 export * from './createConceptRequest';
 export * from './createConsorcioRequest';
+export * from './createConsorcioRequestIvaCondition';
 export * from './createEntryRequest';
 export * from './createExpenseRequest';
 export * from './createFacturaARequest';
