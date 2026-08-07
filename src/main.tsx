@@ -16,7 +16,7 @@ const queryClient = new QueryClient({
 });
 
 async function startApp() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_MSW !== "false") {
     const { worker } = await import("./mocks/browser");
     await worker.start({
       onUnhandledRequest: "bypass",
