@@ -111,7 +111,6 @@ describe("Header", () => {
         id: "1",
         cuit: "30711111111",
         razon_social: "Consorcio Torre Norte",
-        nombre_fantasia: "Torre Norte",
       },
     ];
 
@@ -127,7 +126,7 @@ describe("Header", () => {
 
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     const options = Array.from(select.options).map((o) => o.text);
-    expect(options).toContain("Torre Norte");
+    expect(options).toContain("Consorcio Torre Norte");
   });
 
   it("[@empty-state] shows 'Seleccionar consorcio' when no consorcio selected", () => {
@@ -136,7 +135,6 @@ describe("Header", () => {
         id: "1",
         cuit: "30711111111",
         razon_social: "Consorcio Torre Norte",
-        nombre_fantasia: "Torre Norte",
       },
     ];
 

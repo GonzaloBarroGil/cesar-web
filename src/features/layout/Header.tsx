@@ -51,7 +51,7 @@ function ConsorcioSelector() {
         {selectedId === null && <option value="">Seleccionar consorcio</option>}
         {consorcios.map((c) => (
           <option key={c.id} value={c.id}>
-            {c.nombre_fantasia || c.razon_social}
+            {c.razon_social}
           </option>
         ))}
       </select>

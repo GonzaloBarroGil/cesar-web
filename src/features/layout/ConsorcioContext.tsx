@@ -1,10 +1,11 @@
-import { type ReactNode, createContext, useCallback, useContext, useState } from "react";
+import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
+import { useListConsorcios } from "@/api/generated/consorcio/consorcio";
+import type { ConsorcioResponse } from "@/api/generated/models";
 
 interface ConsorcioListItem {
   id: string;
   cuit: string;
   razon_social: string;
-  nombre_fantasia: string;
 }
 
 interface ConsorcioState {
@@ -16,18 +17,24 @@ interface ConsorcioState {
 
 const STORAGE_KEY = "cesar_consorcio_id";
 
-const FIXTURE_CONSORCIOS: ConsorcioListItem[] = [
-  {
-    id: "550e8400-e29b-41d4-a716-446655440001",
-    cuit: "30711111111",
-    razon_social: "Consorcio Torre Norte",
-    nombre_fantasia: "Torre Norte",
-  },
-];
+function toListItem(c: ConsorcioResponse): ConsorcioListItem {
+  return {
+    id: c.id ?? "",
+    cuit: c.cuit?.value ?? "",
+    razon_social: c.razon_social ?? "",
+  };
+}
 
 const ConsorcioContext = createContext<ConsorcioState | null>(null);
 
 function ConsorcioProvider({ children }: { children: ReactNode }) {
+  const { data: apiConsorcios = [], isLoading } = useListConsorcios();
+
+  const consorcios = useMemo(
+    () => apiConsorcios.map(toListItem),
+    [apiConsorcios],
+  );
+
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
   });
@@ -41,8 +48,8 @@ function ConsorcioProvider({ children }: { children: ReactNode }) {
     <ConsorcioContext.Provider
       value={{
         selectedId,
-        consorcios: FIXTURE_CONSORCIOS,
-        isLoading: false,
+        consorcios,
+        isLoading,
         select,
       }}
     >
