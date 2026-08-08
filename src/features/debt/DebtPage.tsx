@@ -6,6 +6,7 @@ import {
 } from "@/api/generated/debt/debt";
 import type { ListLiquidacionesParams, ListLiquidacionesStatus } from "@/api/generated/models";
 import { Input } from "@/components/ui/input";
+import { useConsorcio } from "@/features/layout/ConsorcioContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -18,15 +19,26 @@ function DebtPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { selectedId, consorcios } = useConsorcio();
+  const consorcioId = selectedId ?? consorcios[0]?.id ?? "";
 
   const periodCode = searchParams.get("period_code") ?? "";
   const status = searchParams.get("status") ?? "";
 
   const apiParams: ListLiquidacionesParams = {};
+  if (consorcioId) apiParams.consorcio_id = consorcioId;
   if (periodCode) apiParams.period_code = periodCode;
   if (status) apiParams.status = status as ListLiquidacionesStatus;
 
   const { data, isLoading, error } = useListLiquidaciones(apiParams);
+
+  if (!consorcioId) {
+    return (
+      <div className="flex items-center justify-center h-64 text-neutral-500 text-lg">
+        Seleccione un consorcio para ver la deuda.
+      </div>
+    );
+  }
 
   const generateLiquidacion = useGenerateLiquidacion();
   const generateBatch = useGenerateLiquidacionBatch();

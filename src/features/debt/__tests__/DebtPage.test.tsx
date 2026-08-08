@@ -19,7 +19,14 @@ import {
   useGenerateLiquidacionBatch,
   useListLiquidaciones,
 } from "@/api/generated/debt/debt";
+import { MockConsorcioProvider } from "@/features/layout/__tests__/mocks";
 import { DebtPage } from "../DebtPage";
+
+const TEST_CONSORCIO_ID = "cons-1";
+
+const mockConsorcios = [
+  { id: TEST_CONSORCIO_ID, cuit: "30711111111", razon_social: "Consorcio Test" },
+];
 
 const mockMoney = { amount: "0.00", currency: "ARS" as const };
 const mockMoney45000 = { amount: "45000.00", currency: "ARS" as const };
@@ -53,9 +60,11 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
-        <DebtPage />
-      </MemoryRouter>
+      <MockConsorcioProvider selectedId={TEST_CONSORCIO_ID} consorcios={mockConsorcios}>
+        <MemoryRouter>
+          <DebtPage />
+        </MemoryRouter>
+      </MockConsorcioProvider>
     </QueryClientProvider>,
   );
 }
