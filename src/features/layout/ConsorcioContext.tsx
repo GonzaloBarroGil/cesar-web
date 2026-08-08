@@ -1,6 +1,6 @@
-import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useListConsorcios } from "@/api/generated/consorcio/consorcio";
 import type { ConsorcioResponse } from "@/api/generated/models";
+import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
 
 interface ConsorcioListItem {
   id: string;
@@ -30,10 +30,7 @@ const ConsorcioContext = createContext<ConsorcioState | null>(null);
 function ConsorcioProvider({ children }: { children: ReactNode }) {
   const { data: apiConsorcios = [], isLoading } = useListConsorcios();
 
-  const consorcios = useMemo(
-    () => apiConsorcios.map(toListItem),
-    [apiConsorcios],
-  );
+  const consorcios = useMemo(() => apiConsorcios.map(toListItem), [apiConsorcios]);
 
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;

@@ -1,5 +1,6 @@
 import { useListExpenses } from "@/api/generated/expenses/expenses";
 import type { ListExpensesParams } from "@/api/generated/models";
+import { useConsorcio } from "@/features/layout/ConsorcioContext";
 import { Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ExpenseFilters, type FilterState } from "./ExpenseFilters";
@@ -7,6 +8,8 @@ import { ExpenseList } from "./ExpenseList";
 
 function ExpensesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { selectedId, consorcios } = useConsorcio();
+  const consorcioId = selectedId ?? consorcios[0]?.id ?? "";
 
   const filters: FilterState = {
     period_code: searchParams.get("period_code") ?? "",
@@ -15,11 +18,20 @@ function ExpensesPage() {
   };
 
   const apiParams: ListExpensesParams = {};
+  if (consorcioId) apiParams.consorcio_id = consorcioId;
   if (filters.period_code) apiParams.period_code = filters.period_code;
   if (filters.type) apiParams.type = filters.type;
   if (filters.status) apiParams.status = filters.status;
 
   const { data: expenses = [], isLoading, error } = useListExpenses(apiParams);
+
+  if (!consorcioId) {
+    return (
+      <div className="flex items-center justify-center h-64 text-neutral-500 text-lg">
+        Seleccione un consorcio para ver expensas.
+      </div>
+    );
+  }
 
   const handleFilterChange = (newFilters: FilterState) => {
     const params = new URLSearchParams();

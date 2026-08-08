@@ -1,4 +1,5 @@
 import type { ExpenseResponse } from "@/api/generated/models";
+import { MockConsorcioProvider } from "@/features/layout/__tests__/mocks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -11,9 +12,19 @@ vi.mock("@/api/generated/expenses/expenses", () => ({
 import { useListExpenses } from "@/api/generated/expenses/expenses";
 import { ExpensesPage } from "../ExpensesPage";
 
+const TEST_CONSORCIO_ID = "550e8400-e29b-41d4-a716-446655440001";
+
+const mockConsorcios = [
+  {
+    id: TEST_CONSORCIO_ID,
+    cuit: "30711111111",
+    razon_social: "Consorcio Test",
+  },
+];
+
 const mockExpense: ExpenseResponse = {
   id: "550e8400-e29b-41d4-a716-446655440701",
-  consorcio_id: "550e8400-e29b-41d4-a716-446655440001",
+  consorcio_id: TEST_CONSORCIO_ID,
   period_code: "202606",
   category_id: "550e8400-e29b-41d4-a716-446655440100",
   concept_id: "550e8400-e29b-41d4-a716-446655440200",
@@ -35,9 +46,11 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
-        <ExpensesPage />
-      </MemoryRouter>
+      <MockConsorcioProvider selectedId={TEST_CONSORCIO_ID} consorcios={mockConsorcios}>
+        <MemoryRouter>
+          <ExpensesPage />
+        </MemoryRouter>
+      </MockConsorcioProvider>
     </QueryClientProvider>,
   );
 }
