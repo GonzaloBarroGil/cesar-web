@@ -28,6 +28,6 @@
     }
   },
   "files": {
-    "ignore": ["src/api/generated/**", "src/mocks/fixtures/**"]
+    "ignore": ["src/api/generated/**", "src/mocks/fixtures/**", "dist/**", "public/mockServiceWorker.js"]
   }
 }
