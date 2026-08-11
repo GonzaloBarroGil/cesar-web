@@ -70,12 +70,9 @@ function DashboardPage() {
     query: { enabled: !!consorcioId },
   });
 
-  const expensesQuery = useListExpenses(
-    consorcioId
-      ? { consorcio_id: consorcioId, type: "EXTRAORDINARIA", status: "PENDING" }
-      : undefined,
-    { query: { enabled: !!consorcioId } },
-  );
+  const expensesQuery = useListExpenses(consorcioId ? { consorcio_id: consorcioId } : undefined, {
+    query: { enabled: !!consorcioId },
+  });
 
   const defaultPeriod = useMemo(() => {
     const liquidaciones = liquidacionesQuery.data?.liquidaciones ?? [];
@@ -122,7 +119,9 @@ function DashboardPage() {
       .reduce((s, p) => s + Number.parseFloat(p.amount.amount || "0"), 0);
     const rate = totalDebt + totalPaid > 0 ? (totalPaid / (totalDebt + totalPaid)) * 100 : 0;
 
-    const pendingCount = expenses.length;
+    const pendingCount = expenses.filter(
+      (e) => e.expense_type === "EXTRAORDINARIA" && e.approval_status === "PENDING",
+    ).length;
 
     return { totalDebt, activeCount, totalPaid, rate, pendingCount };
   }, [liquidacionesQuery.data, paymentsQuery.data, expensesQuery.data]);
@@ -248,6 +247,10 @@ function DashboardPage() {
             empty={expensesQuery.isSuccess && (expensesQuery.data?.length ?? 0) === 0}
             emptyMessage="Sin aprobaciones pendientes."
             error={expensesQuery.isError}
+            errorMessage={
+              (expensesQuery.error as { response?: { data?: { error?: { message?: string } } } })
+                ?.response?.data?.error?.message
+            }
             onRetry={() => expensesQuery.refetch()}
           />
 

@@ -11,6 +11,7 @@ interface MetricCardProps {
   empty?: boolean;
   emptyMessage?: string;
   onRetry?: () => void;
+  errorMessage?: string;
 }
 
 function MetricCard({
@@ -24,6 +25,7 @@ function MetricCard({
   empty = false,
   emptyMessage,
   onRetry,
+  errorMessage,
 }: MetricCardProps) {
   const isClickable = !!onClick;
 
@@ -47,6 +49,11 @@ function MetricCard({
       <div className="rounded-lg border border-red-200 bg-red-50 p-4">
         <p className="text-sm font-medium text-neutral-700 mb-1">{title}</p>
         <p className="text-sm text-red-600">No se pudo cargar.</p>
+        {errorMessage && (
+          <p className="text-xs text-red-500 mt-1 truncate" title={errorMessage}>
+            {errorMessage}
+          </p>
+        )}
         {onRetry && (
           <button
             type="button"
