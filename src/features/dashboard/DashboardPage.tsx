@@ -74,6 +74,7 @@ function DashboardPage() {
     consorcioId
       ? { consorcio_id: consorcioId, type: "EXTRAORDINARIA", status: "PENDING" }
       : undefined,
+    { query: { enabled: !!consorcioId } },
   );
 
   const defaultPeriod = useMemo(() => {
@@ -244,7 +245,9 @@ function DashboardPage() {
                 ? () => navigate("/expenses?type=EXTRAORDINARIA&status=PENDING")
                 : undefined
             }
-            empty={!hasAnyData}
+            empty={
+              expensesQuery.isSuccess && (expensesQuery.data?.length ?? 0) === 0
+            }
             emptyMessage="Sin aprobaciones pendientes."
             error={expensesQuery.isError}
             onRetry={() => expensesQuery.refetch()}
