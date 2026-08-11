@@ -245,9 +245,7 @@ function DashboardPage() {
                 ? () => navigate("/expenses?type=EXTRAORDINARIA&status=PENDING")
                 : undefined
             }
-            empty={
-              expensesQuery.isSuccess && (expensesQuery.data?.length ?? 0) === 0
-            }
+            empty={expensesQuery.isSuccess && (expensesQuery.data?.length ?? 0) === 0}
             emptyMessage="Sin aprobaciones pendientes."
             error={expensesQuery.isError}
             onRetry={() => expensesQuery.refetch()}
