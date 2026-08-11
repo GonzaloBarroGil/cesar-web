@@ -1,20 +1,36 @@
 import { Button } from "@/components/ui/button";
 import type { ConsorcioData } from "@/mocks/fixtures/data";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface ConsorcioListProps {
   consorcios: ConsorcioData[];
   isLoading: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
-function ConsorcioList({ consorcios, isLoading }: ConsorcioListProps) {
+function ConsorcioList({ consorcios, isLoading, isError = false, onRetry }: ConsorcioListProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
         {[1, 2].map((i) => (
           <div key={i} className="h-16 bg-neutral-100 animate-pulse rounded-lg" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <p className="text-neutral-500 text-lg">No se pudieron cargar los consorcios.</p>
+        {onRetry && (
+          <Button variant="outline" onClick={onRetry}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reintentar
+          </Button>
+        )}
       </div>
     );
   }

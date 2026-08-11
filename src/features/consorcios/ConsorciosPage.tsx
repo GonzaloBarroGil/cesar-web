@@ -5,12 +5,19 @@ import { ConsorcioList } from "./ConsorcioList";
 import { consorcioKeys } from "./queryKeys";
 
 function ConsorciosPage() {
-  const { data: consorcios = [], isLoading } = useQuery({
+  const { data: consorcios = [], isLoading, isError, refetch } = useQuery({
     queryKey: consorcioKeys.lists(),
     queryFn: () => apiClient<ConsorcioData[]>({ url: "/consorcios", method: "GET" }),
   });
 
-  return <ConsorcioList consorcios={consorcios} isLoading={isLoading} />;
+  return (
+    <ConsorcioList
+      consorcios={consorcios}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={() => refetch()}
+    />
+  );
 }
 
 export { ConsorciosPage };

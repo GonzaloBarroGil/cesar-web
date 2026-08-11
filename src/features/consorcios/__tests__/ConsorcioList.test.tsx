@@ -59,12 +59,23 @@ describe("ConsorcioList", () => {
   it("[@empty-state] shows empty message when no consorcios", () => {
     render(
       <MemoryRouter>
-        <ConsorcioList consorcios={[]} isLoading={false} />
+        <ConsorcioList consorcios={[]} isLoading={false} isError={false} />
       </MemoryRouter>,
     );
 
     expect(screen.getByText(/no hay consorcios registrados/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /registrar el primero/i })).toBeInTheDocument();
+  });
+
+  it("shows error message with retry button", () => {
+    render(
+      <MemoryRouter>
+        <ConsorcioList consorcios={[]} isLoading={false} isError onRetry={() => {}} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/no se pudieron cargar los consorcios/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reintentar/i })).toBeInTheDocument();
   });
 
   it("shows loading skeleton when loading", () => {
